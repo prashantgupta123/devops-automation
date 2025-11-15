@@ -1,0 +1,57 @@
+{
+    "EC2Instance": {
+        "Namespace": ["AWS/EC2", "CWAgent"],
+        "Dimension": ["InstanceId"],
+        "ExcludeDimension": []
+    },
+    "RDSCluster": {
+        "Namespace": ["AWS/RDS"],
+        "Dimension": ["DBClusterIdentifier"],
+        "ExcludeDimension": []
+    },
+    "RDSInstance": {
+        "Namespace": ["AWS/RDS"],
+        "Dimension": ["DBInstanceIdentifier"],
+        "ExcludeDimension": []
+    },
+    "TargetGroup": {
+        "Namespace": ["AWS/ApplicationELB"],
+        "Dimension": ["TargetGroup"],
+        "ExcludeDimension": ["LoadBalancer"]
+    },
+    "LoadBalancerTargetGroup": {
+        "Namespace": ["AWS/ApplicationELB"],
+        "Dimension": ["TargetGroup", "LoadBalancer"],
+        "ExcludeDimension": []
+    },
+    "LoadBalancer": {
+        "Namespace": ["AWS/ApplicationELB"],
+        "Dimension": ["LoadBalancer"],
+        "ExcludeDimension": ["TargetGroup"]
+    },
+    "ECSService": {
+        "Namespace": ["AWS/ECS"],
+        "Dimension": ["ClusterName", "ServiceName"],
+        "ExcludeDimension": [""]
+    },
+    "ECSCluster": {
+        "Namespace": ["AWS/ECS"],
+        "Dimension": ["ClusterName"],
+        "ExcludeDimension": ["ServiceName"]
+    },
+    "Lambda": {
+        "Namespace": ["AWS/Lambda"],
+        "Dimension": ["FunctionName"],
+        "ExcludeDimension": ["Resource"]
+    },
+    "LambdaResource": {
+        "Namespace": ["AWS/Lambda"],
+        "Dimension": ["FunctionName", "Resource"],
+        "ExcludeDimension": []
+    },
+    "SQS": {
+        "Namespace": ["AWS/SQS"],
+        "Dimension": ["QueueName"],
+        "ExcludeDimension": [""]
+    }
+}

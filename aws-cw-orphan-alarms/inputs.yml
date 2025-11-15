@@ -1,0 +1,21 @@
+region_name: "us-east-1"
+profile_name: ""
+role_arn: ""
+access_key: ""
+secret_key: ""
+session_token: ""
+
+delete: false
+
+Email:
+  enabled: false
+  details:
+    subject_prefix: "MyProject"
+    host: "smtp.office365.com:587"
+    username: ""
+    password: ""
+    from: ""
+    to:
+      - "prashant.gupta@example.com"
+    cc:
+      - "test@example.com"

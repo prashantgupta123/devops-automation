@@ -1,0 +1,57 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "EC2Permission",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DescribeInstances"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "ELBPermission",
+            "Effect": "Allow",
+            "Action": [
+                "elasticloadbalancing:DescribeLoadBalancers",
+                "elasticloadbalancing:DescribeTargetGroups"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "RDSPermission",
+            "Effect": "Allow",
+            "Action": [
+                "rds:DescribeDBInstances",
+                "rds:DescribeDBClusters"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "ECSPermission",
+            "Effect": "Allow",
+            "Action": [
+                "ecs:ListClusters",
+                "ecs:ListServices"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "LambdaPermission",
+            "Effect": "Allow",
+            "Action": [
+                "lambda:ListFunctions",
+                "lambda:ListVersionsByFunction"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "SQSPermission",
+            "Effect": "Allow",
+            "Action": [
+                "sqs:ListQueues"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

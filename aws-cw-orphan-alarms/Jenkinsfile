@@ -1,0 +1,91 @@
+pipeline {
+    agent any
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '5', artifactNumToKeepStr: '5'))
+        timestamps()
+    }
+    environment {
+        DEFAULT_ENV = "non-prod"
+        DEFAULT_BRANCH = "master"
+        GIT_URL = "git@github.com:prashantgupta123/devops-automation.git"
+        GIT_PATH = "aws-cw-orphan-alarms"
+
+        REGION_NAME = "us-east-1"
+        REPOSITORY_NUMBER = "999999999999"
+        PROJECT_NAME = "Generic"
+        SNS_TOPIC_NAME = "non-prod-generic-infra-alert"
+        S3_BUCKET_NAME = "non-prod-generic-config"
+        S3_BUCKET_PATH = "aws-cw-orphan-alarms/inputs.yml"
+    }
+    triggers {
+        cron('0 5 * * 1')
+    }
+    stages {
+        stage("Setting Build") {
+            steps {
+                wrap([$class: 'BuildUser']) {
+                    script {
+                        def changeLogSets = currentBuild.changeSets
+                        currentBuild.displayName = "#${env.DEFAULT_ENV}-#${env.DEFAULT_BRANCH}-#${currentBuild.number}"
+                        currentBuild.description = "Build By: ${env.BUILD_USER}"
+                    }
+                }
+            }
+        }
+        stage('Cleaning the Workspace') {
+            steps {
+                step([$class: 'WsCleanup'])
+            }
+        }
+        stage('Pulling the Repository') {
+            steps {
+                echo "Branch: ${env.DEFAULT_BRANCH}"
+                echo "Environment: ${env.DEFAULT_ENV}"
+                script {
+                    git branch: "${env.DEFAULT_BRANCH}", url: "${env.GIT_URL}", changelog: true, poll: true
+                }
+            }
+        }
+        stage('Download Artifacts from S3') {
+            steps {
+                script {
+                    sh """#!/bin/bash
+                        set -xe
+                        aws s3 cp s3://${env.S3_BUCKET_NAME}/${env.S3_BUCKET_PATH} ./ --region ${env.REGION_NAME}
+                    """
+                }
+            }
+        }
+        stage('Execute Python Script') {
+            steps {
+                script {
+                    sh """#!/bin/bash
+                        set -xe
+                        python3 -m venv .venv
+                        source .venv/bin/activate
+                        python --version
+                        python -m pip install --upgrade pip
+                        python -m pip --version
+                        python -m pip install -r requirements.txt
+                        python main.py
+                        deactivate
+                        rm -rf .venv
+                        echo "Job Completed Successfully"
+                    """
+                }
+            }
+        }
+    }
+    post {
+        failure {
+            script {
+                sh """#!/bin/bash
+                    echo "Hi, Jenkins deployment failed for ${env.JOB_NAME} having build number ${env.BUILD_NUMBER}" > message.txt
+                    aws sns publish --topic-arn "arn:aws:sns:${env.REGION_NAME}:${env.REPOSITORY_NUMBER}:${env.SNS_TOPIC_NAME}" \
+                    --message file://message.txt --subject "${env.PROJECT_NAME} | ${env.DEFAULT_ENV} | ERROR - Jenkins Deployment Failed" \
+                    --region ${env.REGION_NAME}
+                """
+            }
+        }
+    }
+}
