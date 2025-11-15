@@ -1,0 +1,17 @@
+[
+    {
+        "cloudName": "AWS",
+        "regionName": "us-east-1",
+        "projectName": "MyProject",
+        "accountId": "999999999999",
+        "accountName": "myproject-nonprod",
+        "roleName": "myproject_ro",
+        "accountKeys": {
+            "profile_name": "",
+            "role_arn": "",
+            "access_key": "ASI...",
+            "secret_access_key": "CY0...",
+            "key_session_token": "IQo..."
+        }
+    }
+]
