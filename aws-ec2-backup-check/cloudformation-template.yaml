@@ -1,0 +1,183 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'EC2 Backup Compliance Checker Lambda Function'
+
+Parameters:
+  LambdaFunctionName:
+    Type: String
+    Default: 'ec2-backup-compliance-checker'
+    Description: 'Name for the Lambda function'
+  
+  SMTPSecretName:
+    Type: String
+    Description: 'AWS Secrets Manager secret name containing SMTP credentials'
+    Default: 'ses-smtp-user/NW-Projects'
+  
+  NotificationEmail:
+    Type: String
+    Description: 'Email address to receive notifications'
+    Default: 'admin@example.com'
+  
+  SubjectPrefix:
+    Type: String
+    Description: 'Email subject prefix'
+    Default: 'AWS-Alert'
+  
+  ScheduleExpression:
+    Type: String
+    Description: 'CloudWatch Events schedule expression (e.g., rate(1 day) or cron(0 9 * * ? *))'
+    Default: 'rate(1 day)'
+  
+  LambdaTimeout:
+    Type: Number
+    Description: 'Lambda function timeout in seconds'
+    Default: 300
+    MinValue: 60
+    MaxValue: 900
+
+Resources:
+  # IAM Role for Lambda Function
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${LambdaFunctionName}-execution-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: EC2BackupCompliancePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - backup:ListBackupPlans
+                  - backup:ListBackupSelections
+                  - backup:GetBackupSelection
+                  - backup:ListProtectedResources
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${SMTPSecretName}*'
+      Tags:
+        - Key: 'Name'
+          Value: !Ref LambdaFunctionName
+        - Key: 'Project'
+          Value: 'Cloudcare'
+        - Key: 'Environment'
+          Value: 'prod'
+        - Key: 'CreatedBy'
+          Value: 'prashantgupta@example.com'
+        - Key: 'Owner'
+          Value: 'prashantgupta@example.com'
+
+  
+  # Lambda Function
+  EC2BackupComplianceFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref LambdaFunctionName
+      Runtime: python3.13
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: !Ref LambdaTimeout
+      MemorySize: 256
+      Code:
+        ZipFile: |
+          import json
+          def lambda_handler(event, context):
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps('Placeholder - Upload your deployment package')
+              }
+      Environment:
+        Variables:
+          SMTP_SECRET_NAME: !Ref SMTPSecretName
+          NOTIFICATION_EMAIL: !Ref NotificationEmail
+          SUBJECT_PREFIX: !Ref SubjectPrefix
+      Description: 'Monitors EC2 instances for AWS Backup compliance'
+      Tags:
+        - Key: 'Name'
+          Value: !Ref LambdaFunctionName
+        - Key: 'Project'
+          Value: 'Cloudcare'
+        - Key: 'Environment'
+          Value: 'prod'
+        - Key: 'CreatedBy'
+          Value: 'prashantgupta@example.com'
+        - Key: 'Owner'
+          Value: 'prashantgupta@example.com'
+
+  LambdaFunctionConfig:
+    Type: AWS::Lambda::EventInvokeConfig
+    Properties:
+      FunctionName: !Ref EC2BackupComplianceFunction
+      MaximumRetryAttempts: 0
+      Qualifier: "$LATEST"
+  
+  # EventBridge Rule for Scheduling
+  ScheduleRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${LambdaFunctionName}-schedule'
+      Description: 'Triggers EC2 backup compliance check'
+      ScheduleExpression: !Ref ScheduleExpression
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt EC2BackupComplianceFunction.Arn
+          Id: 'EC2BackupComplianceTarget'
+      Tags:
+        - Key: 'Name'
+          Value: !Ref LambdaFunctionName
+        - Key: 'Project'
+          Value: 'Cloudcare'
+        - Key: 'Environment'
+          Value: 'prod'
+        - Key: 'CreatedBy'
+          Value: 'prashantgupta@example.com'
+        - Key: 'Owner'
+          Value: 'prashantgupta@example.com'
+
+  # Permission for EventBridge to invoke Lambda
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref EC2BackupComplianceFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ScheduleRule.Arn
+
+Outputs:
+  LambdaFunctionName:
+    Description: 'Name of the Lambda function'
+    Value: !Ref EC2BackupComplianceFunction
+    Export:
+      Name: !Sub '${AWS::StackName}-LambdaFunction'
+  
+  LambdaFunctionArn:
+    Description: 'ARN of the Lambda function'
+    Value: !GetAtt EC2BackupComplianceFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-LambdaFunctionArn'
+  
+  IAMRoleArn:
+    Description: 'ARN of the Lambda execution role'
+    Value: !GetAtt LambdaExecutionRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-IAMRole'
+  
+  ScheduleRuleArn:
+    Description: 'ARN of the EventBridge schedule rule'
+    Value: !GetAtt ScheduleRule.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ScheduleRule'

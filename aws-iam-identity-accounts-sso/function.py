@@ -10,7 +10,7 @@ START_URL = "https://d-9999999999.awsapps.com/start"
 
 def register_sso_client():
     oidc = boto3.client("sso-oidc", region_name=REGION)
-    reg = oidc.register_client(clientName="TTN-ReadOnly-Client", clientType="public")
+    reg = oidc.register_client(clientName="ReadOnly-Client", clientType="public")
     return oidc, reg["clientId"], reg["clientSecret"]
 
 def authorize_device(oidc, client_id, client_secret):
