@@ -1,0 +1,40 @@
+[
+    {
+        "accountId": "123456789012",
+        "accountName": "your-account-name",
+        "period": "2025-11-01 to 2025-12-01",
+        "total": 8.25,
+        "regions": {
+            "ap-south-1": 7.05,
+            "NoRegion": 1.19,
+            "us-east-1": 0.01
+        },
+        "services": {
+            "AWS Security Hub": 3.59,
+            "AWS Key Management Service": 1.52,
+            "Tax": 1.19,
+            "Amazon Simple Storage Service": 1.17,
+            "AWS CloudTrail": 0.36,
+            "Amazon Simple Queue Service": 0.35,
+            "AWS Config": 0.04,
+            "AWS Payment Cryptography": 0.01
+        },
+        "regionServices": {
+            "NoRegion": {
+                "Tax": 1.19
+            },
+            "ap-south-1": {
+                "AWS Security Hub": 3.59,
+                "AWS Key Management Service": 1.52,
+                "Amazon Simple Storage Service": 1.17,
+                "AWS CloudTrail": 0.36,
+                "Amazon Simple Queue Service": 0.35,
+                "AWS Config": 0.04,
+                "AWS Payment Cryptography": 0.01
+            },
+            "us-east-1": {
+                "Amazon Simple Storage Service": 0.01
+            }
+        }
+    }
+]

@@ -1,0 +1,20 @@
+# Example Terraform variables file
+# Copy this file to terraform.tfvars and update with your values
+
+aws_region     = "us-east-1"
+function_name  = "aws-news-notifier"
+webhook_url    = "https://chat.googleapis.com/v1/spaces/YOUR_SPACE_ID/messages?key=YOUR_KEY&token=YOUR_TOKEN"
+
+# Optional: Customize schedule (default is daily at 9 AM UTC)
+# schedule_expression = "cron(0 9 * * ? *)"
+
+# Optional: Customize log retention (default is 14 days)
+# log_retention_days = 30
+
+# Optional: Add custom tags
+# tags = {
+#   Project     = "aws-news-notifier"
+#   Environment = "production"
+#   Team        = "devops"
+#   Owner       = "<owner-email>"
+# }

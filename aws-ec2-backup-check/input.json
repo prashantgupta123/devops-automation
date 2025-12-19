@@ -12,7 +12,7 @@
 	"notification": {
 		"email": {
 			"subject_prefix": "MyProject",
-			"to": "prashantgupta@example.com",
+			"to": "user@example.com",
 			"cc": [],
 			"bcc": []
 		}

@@ -9,9 +9,9 @@
         "accountKeys": {
             "profile_name": "",
             "role_arn": "",
-            "access_key": "ASI...",
-            "secret_access_key": "CY0...",
-            "key_session_token": "IQo..."
+            "access_key": "",
+            "secret_access_key": "",
+            "key_session_token": ""
         }
     }
 ]

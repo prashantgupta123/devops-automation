@@ -1,0 +1,17 @@
+[
+    {
+        "cloudName": "AWS",
+        "regionName": "us-east-1",
+        "projectName": "YourProject",
+        "accountId": "123456789012",
+        "accountName": "your-account-name",
+        "roleName": "your_role_name",
+        "accountKeys": {
+            "profile_name": "your-aws-profile",
+            "role_arn": "arn:aws:iam::123456789012:role/your-role",
+            "access_key": "",
+            "secret_access_key": "",
+            "key_session_token": ""
+        }
+    }
+]
