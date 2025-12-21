@@ -6,15 +6,50 @@ A comprehensive collection of DevOps automation tools and scripts for cloud infr
 
 ```
 devops-automation/
-├── aws-iam-identity-accounts-sso/    # AWS SSO credential automation
-│   ├── function.py                   # Main SSO authentication script
-│   ├── example_account_details.json  # Sample output format
-│   ├── example_aws_config           # AWS config template
-│   └── README.md                    # Detailed documentation
+├── aws-cost-explorer-report/         # AWS cost analysis and reporting
+├── aws-cw-orphan-alarms/            # CloudWatch orphaned alarms cleanup
+├── aws-ec2-backup-check/            # EC2 backup validation automation
+├── aws-iam-identity-accounts-sso/   # AWS SSO credential automation
+├── aws-news/                        # AWS news aggregation service
+├── aws-target-group-report/         # Target group health reporting
+├── npm-vulnerability-report/        # NPM security vulnerability scanning
 └── README.md                        # This file
 ```
 
 ## Solutions Overview
+
+### 💰 AWS Cost Explorer Report
+**Location:** `aws-cost-explorer-report/`
+
+Generates comprehensive AWS cost analysis reports with breakdowns by service, region, and account. Includes integration with Prowler and AWS Scout Suite for security assessments.
+
+**Key Features:**
+- Cost breakdown by service and region
+- Excel export functionality
+- Multi-account cost aggregation
+- Security scanning integration
+
+### 🔔 AWS CloudWatch Orphan Alarms
+**Location:** `aws-cw-orphan-alarms/`
+
+Identifies and manages orphaned CloudWatch alarms that reference deleted resources. Helps maintain clean monitoring infrastructure and reduce costs.
+
+**Key Features:**
+- Automated orphan alarm detection
+- Jenkins pipeline integration
+- Email notifications
+- Multi-account support
+
+### 💾 AWS EC2 Backup Check
+**Location:** `aws-ec2-backup-check/`
+
+Validates EC2 instance backup compliance and sends notifications for instances without proper backup configurations. Deployable as Lambda function.
+
+**Key Features:**
+- Automated backup validation
+- CloudFormation deployment
+- Email notifications via SES
+- Scheduled execution support
 
 ### 🔐 AWS IAM Identity & SSO Management
 **Location:** `aws-iam-identity-accounts-sso/`
@@ -27,11 +62,38 @@ Automates AWS SSO authentication and credential extraction for multiple accounts
 - JSON output for integration with other tools
 - Support for multiple roles per account
 
-**Use Cases:**
-- CI/CD pipeline credential management
-- Multi-account AWS operations
-- Automated deployment scripts
-- Development environment setup
+### 📰 AWS News Aggregator
+**Location:** `aws-news/`
+
+Serverless Lambda function that aggregates and delivers AWS news and updates. Includes Terraform infrastructure as code for deployment.
+
+**Key Features:**
+- Automated AWS news collection
+- Terraform deployment
+- Serverless architecture
+- Scheduled news delivery
+
+### 🎯 AWS Target Group Report
+**Location:** `aws-target-group-report/`
+
+Generates health and status reports for AWS Application Load Balancer target groups. Monitors target health and sends notifications.
+
+**Key Features:**
+- Target health monitoring
+- Automated reporting
+- Lambda-based execution
+- Email notifications
+
+### 🔒 NPM Vulnerability Report
+**Location:** `npm-vulnerability-report/`
+
+Scans GitHub and GitLab repositories for NPM package vulnerabilities. Generates consolidated security reports across multiple repositories.
+
+**Key Features:**
+- GitHub and GitLab integration
+- NPM audit automation
+- Vulnerability aggregation
+- Email notifications
 
 ## Getting Started
 
@@ -47,8 +109,10 @@ Automates AWS SSO authentication and credential extraction for multiple accounts
 git clone <repository-url>
 cd devops-automation
 
-# Navigate to specific solution
+# Navigate to specific solution (examples)
+cd aws-cost-explorer-report
 cd aws-iam-identity-accounts-sso
+cd npm-vulnerability-report
 
 # Follow solution-specific README
 ```
@@ -98,6 +162,8 @@ solution-name/
 - [ ] Container registry management
 - [ ] Infrastructure cost optimization
 - [ ] Backup and disaster recovery automation
+- [ ] Multi-cloud resource management
+- [ ] Security compliance automation
 
 ### Enhancement Areas
 - [ ] Cross-cloud provider support

@@ -1,0 +1,1 @@
+Update the Root README whenever new folder has been added for any new automation.
