@@ -85,6 +85,18 @@ Generates health and status reports for AWS Application Load Balancer target gro
 - Lambda-based execution
 - Email notifications
 
+### 🌐 Kong Service Routes Automation
+**Location:** `kong-service-routes/`
+
+Automated Kong API Gateway service and route management tool that creates and configures Kong services, routes, plugins, and consumers based on JSON configuration.
+
+**Key Features:**
+- Automated service and route creation
+- Plugin configuration management
+- Consumer and credential management
+- Duplicate prevention validation
+- Comprehensive logging system
+
 ### 🔒 NPM Vulnerability Report
 **Location:** `npm-vulnerability-report/`
 
@@ -126,7 +138,7 @@ cd devops-automation
 cd aws-cost-explorer-report
 cd aws-iam-identity-accounts-sso
 cd npm-vulnerability-report
-cd unauthenticated-apis-report
+cd kong-service-routes
 
 # Follow solution-specific README
 ```
