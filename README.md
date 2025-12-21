@@ -12,6 +12,7 @@ devops-automation/
 ├── aws-iam-identity-accounts-sso/   # AWS SSO credential automation
 ├── aws-news/                        # AWS news aggregation service
 ├── aws-target-group-report/         # Target group health reporting
+├── kong-service-routes/             # Kong API Gateway automation
 ├── npm-vulnerability-report/        # NPM security vulnerability scanning
 ├── unauthenticated-apis-report/     # API authentication security scanning
 └── README.md                        # This file
