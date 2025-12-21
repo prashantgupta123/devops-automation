@@ -13,6 +13,7 @@ devops-automation/
 ├── aws-news/                        # AWS news aggregation service
 ├── aws-target-group-report/         # Target group health reporting
 ├── npm-vulnerability-report/        # NPM security vulnerability scanning
+├── unauthenticated-apis-report/     # API authentication security scanning
 └── README.md                        # This file
 ```
 
@@ -95,6 +96,18 @@ Scans GitHub and GitLab repositories for NPM package vulnerabilities. Generates 
 - Vulnerability aggregation
 - Email notifications
 
+### 🔐 Unauthenticated APIs Report
+**Location:** `unauthenticated-apis-report/`
+
+Security automation tool that scans API endpoints to identify unauthenticated access vulnerabilities. Tests various HTTP methods and authentication schemes.
+
+**Key Features:**
+- Multi-method API testing (GET, POST, PUT, DELETE)
+- Authentication bypass detection
+- Token validation testing
+- Automated security reporting
+- Email notifications for vulnerabilities
+
 ## Getting Started
 
 ### Prerequisites
@@ -113,6 +126,7 @@ cd devops-automation
 cd aws-cost-explorer-report
 cd aws-iam-identity-accounts-sso
 cd npm-vulnerability-report
+cd unauthenticated-apis-report
 
 # Follow solution-specific README
 ```
