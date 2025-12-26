@@ -1,0 +1,40 @@
+workspace:
+  name: "non-prod"
+  aws:
+    account_id: 999999999999
+    role: ""
+    profile: "non-prod-example"
+    region: "us-east-1"
+    vpc:
+      name: "non-prod-example"
+  common:
+    environment: "non-prod"
+    tags:
+      "Module": "LAMBDA/SERVICE"
+
+  lambda:
+    app_name: "ecs-events"
+    handler: "lambda_function.lambda_handler"
+    runtime: "python3.14"
+    timeout: 120
+    memory_size: 128
+    retention_in_days: 7
+    maximum_event_age_in_seconds: 3600
+    maximum_retry_attempts: 0
+    state: "ENABLED"
+    action: "lambda:InvokeFunction"
+    principal: "events.amazonaws.com"
+
+    cluster:
+      "dev-example-backend":
+        - "node-backend"
+      "dev-example-frontend":
+        - "node-frontend"
+      "non-prod-gateway":
+        - "kong-admin"
+        - "kong-manager"
+        - "kong-proxy"
+
+  sns:
+    names: "ecs-events"
+    display_name: "Non Prod | ECS Alert"

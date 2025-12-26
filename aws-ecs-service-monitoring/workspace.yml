@@ -1,0 +1,9 @@
+common:
+  project_name_prefix: "example"
+  project: "Example"
+  tags:
+    "Feature": "app-services"
+    "Project": "Example"
+    "Owner": "test@example.com"
+    "ManagedBy": "DevOps"
+    "CreatedBy": "test@example.com"

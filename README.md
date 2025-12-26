@@ -9,6 +9,7 @@ devops-automation/
 ├── aws-cost-explorer-report/         # AWS cost analysis and reporting
 ├── aws-cw-orphan-alarms/            # CloudWatch orphaned alarms cleanup
 ├── aws-ec2-backup-check/            # EC2 backup validation automation
+├── aws-ecs-service-monitoring/      # ECS service monitoring and alerting
 ├── aws-iam-identity-accounts-sso/   # AWS SSO credential automation
 ├── aws-news/                        # AWS news aggregation service
 ├── aws-target-group-report/         # Target group health reporting
@@ -85,6 +86,19 @@ Generates health and status reports for AWS Application Load Balancer target gro
 - Automated reporting
 - Lambda-based execution
 - Email notifications
+
+### 🔍 AWS ECS Service Monitoring
+**Location:** `aws-ecs-service-monitoring/`
+
+Automated monitoring solution for AWS ECS services that detects service failures, deployment issues, and task placement problems. Sends real-time notifications via SNS and creates custom CloudWatch metrics.
+
+**Key Features:**
+- Real-time ECS service event monitoring
+- Automated failure detection and alerting
+- Custom CloudWatch metrics creation
+- SNS notification integration
+- Terraform infrastructure as code
+- Support for multiple clusters and services
 
 ### 🌐 Kong Service Routes Automation
 **Location:** `kong-service-routes/`
