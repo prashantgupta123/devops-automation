@@ -1,0 +1,42 @@
+pipeline {
+    agent any
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '5', artifactNumToKeepStr: '5'))
+        timestamps()
+        disableConcurrentBuilds()
+    }
+    environment {
+        DEFAULT_ENV = "non-prod"
+        REGION_NAME = "us-east-1"
+        REPOSITORY_NUMBER = "999999999999"
+        PROJECT_NAME = "Generic"
+        SNS_TOPIC_NAME = "non-prod-generic-infra-alert"
+    }
+    triggers {
+        cron('0 5 * * 1')
+    }
+    stages {
+        stage('Execute Python Script') {
+            steps {
+                script {
+                    sh """#!/bin/bash
+                        cd aws-cloudwatch-alarm-failed-monitoring
+                        bash script.sh
+                    """
+                }
+            }
+        }
+    }
+    post {
+        failure {
+            script {
+                sh """#!/bin/bash
+                    echo "Hi, Jenkins deployment failed for ${env.JOB_NAME} having build number ${env.BUILD_NUMBER}" > message.txt
+                    aws sns publish --topic-arn "arn:aws:sns:${env.REGION_NAME}:${env.REPOSITORY_NUMBER}:${env.SNS_TOPIC_NAME}" \
+                    --message file://message.txt --subject "${env.PROJECT_NAME} | ${env.DEFAULT_ENV} | ERROR - Jenkins Deployment Failed" \
+                    --region ${env.REGION_NAME}
+                """
+            }
+        }
+    }
+}

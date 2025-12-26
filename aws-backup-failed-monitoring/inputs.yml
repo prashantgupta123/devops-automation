@@ -1,0 +1,17 @@
+region_name: "us-east-1"
+profile_name: ""
+role_arn: ""
+access_key: ""
+secret_key: ""
+session_token: ""
+account_id: ""
+
+Email:
+  enabled: true
+  secret_manager: "non-prod-example-smtp"
+  details:
+    subject_prefix: "Example"
+    to:
+      - "test@example.com"
+    cc: []
+    bcc: []

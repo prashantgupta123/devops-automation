@@ -6,20 +6,34 @@ A comprehensive collection of DevOps automation tools and scripts for cloud infr
 
 ```
 devops-automation/
-├── aws-cost-explorer-report/         # AWS cost analysis and reporting
-├── aws-cw-orphan-alarms/            # CloudWatch orphaned alarms cleanup
-├── aws-ec2-backup-check/            # EC2 backup validation automation
-├── aws-ecs-service-monitoring/      # ECS service monitoring and alerting
-├── aws-iam-identity-accounts-sso/   # AWS SSO credential automation
-├── aws-news/                        # AWS news aggregation service
-├── aws-target-group-report/         # Target group health reporting
-├── kong-service-routes/             # Kong API Gateway automation
-├── npm-vulnerability-report/        # NPM security vulnerability scanning
-├── unauthenticated-apis-report/     # API authentication security scanning
-└── README.md                        # This file
+├── aws-backup-failed-monitoring/       # AWS Backup job failure monitoring
+├── aws-cloudwatch-alarm-failed-monitoring/ # CloudWatch alarm action failure monitoring
+├── aws-cost-explorer-report/           # AWS cost analysis and reporting
+├── aws-cw-orphan-alarms/              # CloudWatch orphaned alarms cleanup
+├── aws-ec2-backup-check/              # EC2 backup validation automation
+├── aws-ecs-service-monitoring/        # ECS service monitoring and alerting
+├── aws-iam-identity-accounts-sso/     # AWS SSO credential automation
+├── aws-news/                          # AWS news aggregation service
+├── aws-target-group-report/           # Target group health reporting
+├── kong-service-routes/               # Kong API Gateway automation
+├── npm-vulnerability-report/          # NPM security vulnerability scanning
+├── unauthenticated-apis-report/       # API authentication security scanning
+└── README.md                          # This file
 ```
 
 ## Solutions Overview
+
+### 💾 AWS Backup Failed Monitoring
+**Location:** `aws-backup-failed-monitoring/`
+
+Automated monitoring solution for AWS Backup jobs that identifies failed backup operations and sends detailed reports via email. Helps maintain backup compliance by proactively alerting on backup failures.
+
+**Key Features:**
+- Failed backup job detection over configurable time periods
+- Excel report generation with detailed failure information
+- Email notifications with attached reports
+- Multi-account support with various authentication methods
+- Jenkins pipeline integration for automated scheduling
 
 ### 💰 AWS Cost Explorer Report
 **Location:** `aws-cost-explorer-report/`
@@ -42,6 +56,18 @@ Identifies and manages orphaned CloudWatch alarms that reference deleted resourc
 - Jenkins pipeline integration
 - Email notifications
 - Multi-account support
+
+### ⚠️ AWS CloudWatch Alarm Failed Monitoring
+**Location:** `aws-cloudwatch-alarm-failed-monitoring/`
+
+Monitors CloudWatch alarms for failed actions and sends detailed email reports. Helps maintain monitoring infrastructure health by proactively alerting on alarm action failures.
+
+**Key Features:**
+- Failed alarm action detection
+- Detailed error reporting with HTML email format
+- Multi-account authentication support
+- Jenkins pipeline integration for automated scheduling
+- SMTP configuration via AWS Secrets Manager
 
 ### 💾 AWS EC2 Backup Check
 **Location:** `aws-ec2-backup-check/`
@@ -151,6 +177,7 @@ cd devops-automation
 
 # Navigate to specific solution (examples)
 cd aws-cost-explorer-report
+cd aws-cloudwatch-alarm-failed-monitoring
 cd aws-iam-identity-accounts-sso
 cd npm-vulnerability-report
 cd kong-service-routes
