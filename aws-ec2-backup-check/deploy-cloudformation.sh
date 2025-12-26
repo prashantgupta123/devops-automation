@@ -10,7 +10,7 @@ REGION="ap-south-1"
 
 # Parameters (modify as needed)
 LAMBDA_FUNCTION_NAME="ec2-backup-compliance-checker"
-SMTP_SECRET_NAME="ses-smtp-user/NW-Projects"
+SMTP_SECRET_NAME="ses-smtp-user/example-Projects"
 NOTIFICATION_EMAIL="prashantgupta@example.com"
 SUBJECT_PREFIX="MyProject"
 SCHEDULE_EXPRESSION="rate(1 day)"

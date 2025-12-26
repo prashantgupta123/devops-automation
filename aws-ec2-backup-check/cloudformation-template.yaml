@@ -10,7 +10,7 @@ Parameters:
   SMTPSecretName:
     Type: String
     Description: 'AWS Secrets Manager secret name containing SMTP credentials'
-    Default: 'ses-smtp-user/NW-Projects'
+    Default: 'ses-smtp-user/example-Projects'
   
   NotificationEmail:
     Type: String
