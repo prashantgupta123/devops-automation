@@ -275,9 +275,9 @@ This project is licensed under the MIT License - see individual solution directo
 
 ## Contact
 
-**DevOps Lead:** [Your Name]
-**Team:** DevOps Engineering
-**Repository:** [Repository URL]
+**DevOps Lead:** Prashant Gupta
+**Team:** Cloud Platform Lead
+**Repository:** https://github.com/prashantgupta123/devops-automation
 
 ---
 
