@@ -13,6 +13,7 @@ devops-automation/
 ├── aws-cw-orphan-alarms/              # CloudWatch orphaned alarms cleanup
 ├── aws-ec2-backup-check/              # EC2 backup validation automation
 ├── aws-ecs-service-monitoring/        # ECS service monitoring and alerting
+├── aws-guardduty-notification/        # GuardDuty multi-channel alert system
 ├── aws-iam-identity-accounts-sso/     # AWS SSO credential automation
 ├── aws-news/                          # AWS news aggregation service
 ├── aws-target-group-report/           # Target group health reporting
@@ -140,6 +141,21 @@ Automated monitoring solution for AWS ECS services that detects service failures
 - SNS notification integration
 - Terraform infrastructure as code
 - Support for multiple clusters and services
+
+### 🛡️ AWS GuardDuty Multi-Channel Notification
+**Location:** `aws-guardduty-notification/`
+
+Comprehensive serverless solution for processing AWS GuardDuty security findings and delivering intelligent notifications across multiple channels. Built with enterprise-grade security and reliability in mind.
+
+**Key Features:**
+- Real-time GuardDuty finding processing via EventBridge
+- Multi-channel notifications (SNS, Email, Google Chat)
+- Flexible AWS authentication methods
+- Production-ready error handling and logging
+- CloudFormation infrastructure as code
+- Automated deployment scripts
+- Severity-based alert formatting
+- Comprehensive security best practices
 
 ### 🌐 Kong Service Routes Automation
 **Location:** `kong-service-routes/`
