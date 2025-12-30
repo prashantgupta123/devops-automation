@@ -6,6 +6,7 @@ A comprehensive collection of DevOps automation tools and scripts for cloud infr
 
 ```
 devops-automation/
+├── aws-agentcore-runtime/             # AWS Bedrock AgentCore AI agent deployment
 ├── aws-backup-failed-monitoring/       # AWS Backup job failure monitoring
 ├── aws-cloudwatch-alarm-failed-monitoring/ # CloudWatch alarm action failure monitoring
 ├── aws-cost-explorer-report/           # AWS cost analysis and reporting
@@ -22,6 +23,20 @@ devops-automation/
 ```
 
 ## Solutions Overview
+
+### 🤖 AWS Bedrock AgentCore Runtime
+**Location:** `aws-agentcore-runtime/`
+
+Comprehensive solution for building, deploying, and managing AI agents using AWS Bedrock AgentCore Runtime. Provides a serverless, fully managed environment for running AI agents at scale with enterprise-grade security and performance.
+
+**Key Features:**
+- Serverless AI agent deployment using AWS Bedrock AgentCore
+- Integration with Claude 3 Haiku model for natural language processing
+- Automated build and deployment pipeline with S3 storage
+- Production-ready Python implementation with error handling and logging
+- Direct API invocation and Lambda integration support
+- Comprehensive monitoring and observability features
+- Security best practices and compliance considerations
 
 ### 💾 AWS Backup Failed Monitoring
 **Location:** `aws-backup-failed-monitoring/`
