@@ -23,6 +23,9 @@ CloudWatch Events (Daily Trigger) → AWS Lambda → Google Chat Webhook
                                    AWS RSS Feed
 ```
 
+## Google Chat Space webhook
+![AWS Bedrock AgentCore Architecture](images/GoogleChatWebHook.png)
+
 ## Prerequisites
 
 - AWS Account with Lambda access

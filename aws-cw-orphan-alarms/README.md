@@ -3,6 +3,9 @@
 This Jenkins pipeline automates the process of generating an AWS Orphan Alarms report using Python scripts and AWS services. 
 The pipeline includes stages for setting up the build environment, pulling the Git repository, downloading artifacts from an S3 bucket, executing a Python script, and handling post-build actions.
 
+## Architecture
+![AWS Bedrock AgentCore Architecture](images/AWS-Orphan-Alarms.png)
+
 ## Pipeline Configuration
 
 ### Options
