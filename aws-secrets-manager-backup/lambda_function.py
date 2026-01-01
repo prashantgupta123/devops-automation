@@ -89,7 +89,7 @@ def backup_secret_to_s3(s3_client, bucket_name: str, secret_name: str, secret_va
 
 def send_notification(config: Dict[str, Any], success_count: int, total_count: int, failed_secrets: List[str]) -> None:
     """Send email notification about backup status."""
-    if not config.get('smtpCredentials') or not config.get('emailNotification'):
+    if not config.get('smtpCredentials') or not config.get('emailNotification') and not config["emailNotification"]["enabled"]:
         logger.info("Email notification not configured, skipping")
         return
     
