@@ -5,7 +5,7 @@ set -e
 
 # Configuration
 FUNCTION_NAME="aws-news-notifier"
-RUNTIME="python3.14"
+RUNTIME="python3.13"
 HANDLER="lambda_function.lambda_handler"
 MEMORY_SIZE=128
 TIMEOUT=30

@@ -516,7 +516,7 @@ def _is_enabled(env_var: str) -> bool:
 ### Prerequisites
 
 - AWS CLI configured with appropriate permissions
-- Python 3.9+ for local development
+- Python 3.13+ for local development
 - Access to AWS Lambda, EventBridge, and SNS services
 
 ### Step 1: Clone and Prepare

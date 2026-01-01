@@ -73,7 +73,7 @@ Resources:
         - Key: 'Name'
           Value: !Ref LambdaFunctionName
         - Key: 'Project'
-          Value: 'Cloudcare'
+          Value: 'MyProject'
         - Key: 'Environment'
           Value: 'prod'
         - Key: 'CreatedBy'
@@ -110,7 +110,7 @@ Resources:
         - Key: 'Name'
           Value: !Ref LambdaFunctionName
         - Key: 'Project'
-          Value: 'Cloudcare'
+          Value: 'MyProject'
         - Key: 'Environment'
           Value: 'prod'
         - Key: 'CreatedBy'
@@ -140,7 +140,7 @@ Resources:
         - Key: 'Name'
           Value: !Ref LambdaFunctionName
         - Key: 'Project'
-          Value: 'Cloudcare'
+          Value: 'MyProject'
         - Key: 'Environment'
           Value: 'prod'
         - Key: 'CreatedBy'

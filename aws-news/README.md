@@ -30,7 +30,7 @@ CloudWatch Events (Daily Trigger) → AWS Lambda → Google Chat Webhook
 
 - AWS Account with Lambda access
 - Google Chat space with webhook configured
-- Python 3.12+ runtime environment
+- Python 3.13+ runtime environment
 - AWS CLI configured (for deployment)
 
 ## Setup Instructions
@@ -53,7 +53,7 @@ CloudWatch Events (Daily Trigger) → AWS Lambda → Google Chat Webhook
 # Create Lambda function
 aws lambda create-function \
   --function-name aws-news-notifier \
-  --runtime python3.14 \
+  --runtime python3.13 \
   --role arn:aws:iam::YOUR_ACCOUNT:role/lambda-execution-role \
   --handler lambda_function.lambda_handler \
   --zip-file fileb://lambda-deployment.zip \
@@ -65,7 +65,7 @@ aws lambda create-function \
 2. Click **Create function**
 3. Choose **Author from scratch**
 4. Function name: `aws-news-notifier`
-5. Runtime: **Python 3.14**
+5. Runtime: **Python 3.13**
 6. Upload the `lambda-deployment.zip` file
 7. Set environment variable `WEBHOOK_URL` with your Google Chat webhook URL
 
@@ -102,7 +102,7 @@ aws lambda add-permission \
 
 ### Lambda Configuration
 
-- **Runtime**: Python 3.14
+- **Runtime**: Python 3.13
 - **Memory**: 128 MB (minimum)
 - **Timeout**: 30 seconds
 - **Architecture**: x86_64
@@ -135,7 +135,7 @@ AWS Daily Updates (3 new):
 • Amazon EC2 now supports new instance types
 https://aws.amazon.com/about-aws/whats-new/...
 
-• AWS Lambda adds support for Python 3.11
+• AWS Lambda adds support for Python 3.13
 https://aws.amazon.com/about-aws/whats-new/...
 ```
 

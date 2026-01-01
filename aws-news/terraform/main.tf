@@ -67,7 +67,7 @@ resource "aws_lambda_function" "aws_news_notifier" {
   function_name    = var.function_name
   role            = aws_iam_role.lambda_role.arn
   handler         = "lambda_function.lambda_handler"
-  runtime         = "python3.14"
+  runtime         = "python3.13"
   timeout         = 30
   memory_size     = 128
 

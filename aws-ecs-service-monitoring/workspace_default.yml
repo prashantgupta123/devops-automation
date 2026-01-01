@@ -15,7 +15,7 @@ workspace:
   lambda:
     app_name: "ecs-events"
     handler: "lambda_function.lambda_handler"
-    runtime: "python3.14"
+    runtime: "python3.13"
     timeout: 120
     memory_size: 128
     retention_in_days: 7

@@ -1,0 +1,185 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Trigger Lambda on EC2 Spot Interruption Warning and send SNS alert.
+
+Parameters:
+  NamePrefix:
+    Type: String
+    Description: The prefix for naming AWS resources.
+    Default: spot-interruption
+  SNSTopicArn:
+    Type: String
+    Description: ARN of the SNS topic to publish alerts
+    Default: ''
+  GoogleChatWebhook:
+    Type: String
+    Description: Google Chat webhook URL
+    Default: ''
+    NoEcho: true
+  EnableSNS:
+    Type: String
+    Description: Enable SNS notifications
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+  EnableEmail:
+    Type: String
+    Description: Enable Email notifications
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+  EnableChat:
+    Type: String
+    Description: Enable Google Chat notifications
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  Project:
+    Type: String
+    Description: The project name for tagging resources.
+    Default: MyProject
+
+  Environment:
+    Type: String
+    Description: The environment for tagging resources (e.g., dev, prod).
+    Default: prod
+
+  CreatedBy:
+    Type: String
+    Description: The email of the creator for tagging resources.
+    Default: prashant.gupta@example.com
+
+  Owner:
+    Type: String
+    Description: The email of the owner for tagging resources.
+    Default: prashant.gupta@example.com
+
+Resources:
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${NamePrefix}-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: lambda-logs-and-sns
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+              - Effect: Allow
+                Action: sns:Publish
+                Resource: !Ref SNSTopicArn
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - ecs:ListContainerInstances
+                  - ecs:DescribeContainerInstances
+                  - ecs:ListTasks
+                  - ecs:DescribeTasks
+                  - ecs:DescribeServices
+                Resource: "*"
+      Tags:
+        - Key: 'Name'
+          Value: !Sub '${NamePrefix}-role'
+        - Key: 'Project'
+          Value: !Ref Project
+        - Key: 'Environment'
+          Value: !Ref Environment
+        - Key: 'CreatedBy'
+          Value: !Ref CreatedBy
+        - Key: 'Owner'
+          Value: !Ref Owner
+
+  SpotInterruptionLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${NamePrefix}-function'
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: python3.13
+      Timeout: 30
+      MemorySize: 128
+      Code:
+        ZipFile: |
+          import json
+          def lambda_handler(event, context):
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps('Placeholder - Upload your deployment package')
+              }
+
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref SNSTopicArn
+          GOOGLE_CHAT_WEBHOOK: !Ref GoogleChatWebhook
+          ENABLE_SNS: !Ref EnableSNS
+          ENABLE_EMAIL: !Ref EnableEmail
+          ENABLE_CHAT: !Ref EnableChat
+      Tags:
+        - Key: 'Name'
+          Value: !Sub '${NamePrefix}-function'
+        - Key: 'Project'
+          Value: !Ref Project
+        - Key: 'Environment'
+          Value: !Ref Environment
+        - Key: 'CreatedBy'
+          Value: !Ref CreatedBy
+        - Key: 'Owner'
+          Value: !Ref Owner
+
+  SpotInterruptionEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${NamePrefix}-event-rule'
+      Description: Triggers Lambda on EC2 Spot Interruption Warning
+      EventPattern:
+        source:
+          - "aws.ec2"
+        detail-type:
+          - "EC2 Spot Instance Interruption Warning"
+      Targets:
+        - Arn: !GetAtt SpotInterruptionLambda.Arn
+          Id: "SpotInterruptionLambdaTarget"
+      Tags:
+        - Key: 'Name'
+          Value: !Sub '${NamePrefix}-event-rule'
+        - Key: 'Project'
+          Value: !Ref Project
+        - Key: 'Environment'
+          Value: !Ref Environment
+        - Key: 'CreatedBy'
+          Value: !Ref CreatedBy
+        - Key: 'Owner'
+          Value: !Ref Owner
+
+  PermissionForEventsToInvokeLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref SpotInterruptionLambda
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt SpotInterruptionEventRule.Arn
+
+  LambdaFunctionConfig:
+    Type: AWS::Lambda::EventInvokeConfig
+    Properties:
+      FunctionName: !Ref SpotInterruptionLambda
+      MaximumRetryAttempts: 0
+      Qualifier: "$LATEST"
+
+Outputs:
+  LambdaFunctionName:
+    Description: Lambda function triggered by Spot Interruption Warning
+    Value: !Ref SpotInterruptionLambda

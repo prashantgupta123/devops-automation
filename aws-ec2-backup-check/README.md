@@ -86,7 +86,7 @@ Configure AWS credentials and notification settings:
 
 3. Configure Lambda function:
    - Handler: `lambda_function.lambda_handler`
-   - Runtime: Python 3.9+
+   - Runtime: Python 3.13+
    - Timeout: 5 minutes
    - Memory: 256 MB (minimum)
 

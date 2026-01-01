@@ -1,0 +1,224 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS Secrets Manager Backup to S3 - Daily automated backup of all secrets'
+
+Parameters:
+  S3BucketName:
+    Type: String
+    Description: S3 bucket name for storing secret backups
+    Default: secrets-manager-backup-bucket
+  
+  ScheduleExpression:
+    Type: String
+    Description: CloudWatch Events schedule expression for backup frequency
+    Default: 'rate(1 day)'
+  
+  Environment:
+    Type: String
+    Description: Environment name
+    Default: production
+    AllowedValues: [development, staging, production]
+  
+  Owner:
+    Type: String
+    Description: Owner of the resources
+    Default: DevOps Team
+
+Resources:
+  # S3 Bucket for storing backups
+  SecretsBackupBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref S3BucketName
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldBackups
+            Status: Enabled
+            ExpirationInDays: 365
+      Tags:
+        - Key: Name
+          Value: !Sub '${S3BucketName}'
+        - Key: Project
+          Value: 'AWS Secrets Manager Backup'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: CreatedBy
+          Value: 'CloudFormation'
+        - Key: ManagedBy
+          Value: 'DevOps Team'
+
+  # IAM Role for Lambda function
+  SecretsBackupLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'SecretsManagerBackupRole-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: SecretsManagerBackupPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:ListSecrets
+                  - secretsmanager:GetSecretValue
+                  - secretsmanager:DescribeSecret
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:PutObjectAcl
+                  - s3:GetObject
+                Resource: !Sub '${SecretsBackupBucket}/*'
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !Ref SecretsBackupBucket
+      Tags:
+        - Key: Name
+          Value: !Sub 'SecretsManagerBackupRole-${Environment}'
+        - Key: Project
+          Value: 'AWS Secrets Manager Backup'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: CreatedBy
+          Value: 'CloudFormation'
+        - Key: ManagedBy
+          Value: 'DevOps Team'
+
+  # Lambda function
+  SecretsBackupLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'secrets-manager-backup-${Environment}'
+      Runtime: python3.13
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt SecretsBackupLambdaRole.Arn
+      Timeout: 900
+      MemorySize: 512
+      Environment:
+        Variables:
+          DESTINATION_S3_BUCKET: !Ref SecretsBackupBucket
+          AWS_REGION: !Ref AWS::Region
+      Code:
+        ZipFile: |
+          import json
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Placeholder - Deploy actual code'}
+      Tags:
+        - Key: Name
+          Value: !Sub 'secrets-manager-backup-${Environment}'
+        - Key: Project
+          Value: 'AWS Secrets Manager Backup'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: CreatedBy
+          Value: 'CloudFormation'
+        - Key: ManagedBy
+          Value: 'DevOps Team'
+
+  # Lambda Event Invoke Config
+  SecretsBackupLambdaEventInvokeConfig:
+    Type: AWS::Lambda::EventInvokeConfig
+    Properties:
+      FunctionName: !Ref SecretsBackupLambda
+      Qualifier: '$LATEST'
+      MaximumRetryAttempts: 0
+      MaximumEventAge: 3600
+
+  # CloudWatch Events Rule for scheduling
+  SecretsBackupScheduleRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub 'secrets-backup-schedule-${Environment}'
+      Description: 'Schedule for AWS Secrets Manager backup'
+      ScheduleExpression: !Ref ScheduleExpression
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt SecretsBackupLambda.Arn
+          Id: SecretsBackupLambdaTarget
+      Tags:
+        - Key: Name
+          Value: !Sub 'secrets-backup-schedule-${Environment}'
+        - Key: Project
+          Value: 'AWS Secrets Manager Backup'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: CreatedBy
+          Value: 'CloudFormation'
+        - Key: ManagedBy
+          Value: 'DevOps Team'
+
+  # Permission for CloudWatch Events to invoke Lambda
+  SecretsBackupLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref SecretsBackupLambda
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt SecretsBackupScheduleRule.Arn
+
+  # CloudWatch Log Group for Lambda
+  SecretsBackupLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/secrets-manager-backup-${Environment}'
+      RetentionInDays: 30
+      Tags:
+        - Key: Name
+          Value: !Sub 'secrets-manager-backup-logs-${Environment}'
+        - Key: Project
+          Value: 'AWS Secrets Manager Backup'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: CreatedBy
+          Value: 'CloudFormation'
+        - Key: ManagedBy
+          Value: 'DevOps Team'
+
+Outputs:
+  LambdaFunctionArn:
+    Description: 'ARN of the Secrets Manager backup Lambda function'
+    Value: !GetAtt SecretsBackupLambda.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-LambdaFunctionArn'
+
+  S3BucketName:
+    Description: 'Name of the S3 bucket storing backups'
+    Value: !Ref SecretsBackupBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-S3BucketName'
+
+  ScheduleRuleArn:
+    Description: 'ARN of the CloudWatch Events rule'
+    Value: !GetAtt SecretsBackupScheduleRule.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ScheduleRuleArn'

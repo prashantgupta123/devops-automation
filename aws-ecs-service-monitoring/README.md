@@ -70,7 +70,7 @@ workspace:
   lambda:
     app_name: "ecs-service-monitor"
     handler: "lambda_function.lambda_handler"
-    runtime: "python3.9"
+    runtime: "python3.13"
     timeout: 60
     memory_size: 128
     retention_in_days: 14

@@ -12,6 +12,7 @@ devops-automation/
 ├── aws-cost-explorer-report/           # AWS cost analysis and reporting
 ├── aws-cw-orphan-alarms/              # CloudWatch orphaned alarms cleanup
 ├── aws-ec2-backup-check/              # EC2 backup validation automation
+├── aws-ec2-spot-interruption-notification/ # EC2 Spot Instance interruption alerts
 ├── aws-ecs-service-monitoring/        # ECS service monitoring and alerting
 ├── aws-guardduty-notification/        # GuardDuty multi-channel alert system
 ├── aws-iam-identity-accounts-sso/     # AWS SSO credential automation
@@ -50,6 +51,21 @@ Automated monitoring solution for AWS Backup jobs that identifies failed backup 
 - Email notifications with attached reports
 - Multi-account support with various authentication methods
 - Jenkins pipeline integration for automated scheduling
+
+### 🔐 AWS Secrets Manager Backup
+**Location:** `aws-secrets-manager-backup/`
+
+Automated daily backup solution for AWS Secrets Manager that stores all secrets in S3 in JSON format. Provides comprehensive backup management with date-based organization and optional email notifications.
+
+**Key Features:**
+- Daily automated backup of all AWS Secrets Manager secrets
+- S3 storage with date-based organization and latest versions
+- Optional SMTP email notifications for backup status reports
+- Flexible AWS authentication methods (profile, role, keys, STS)
+- CloudFormation deployment with EventInvokeConfig (0 retries)
+- Comprehensive logging and error handling
+- S3 lifecycle policies for automatic cleanup
+- Production-ready security with encryption and access controls
 
 ### 💰 AWS Cost Explorer Report
 **Location:** `aws-cost-explorer-report/`
@@ -95,6 +111,19 @@ Validates EC2 instance backup compliance and sends notifications for instances w
 - CloudFormation deployment
 - Email notifications via SES
 - Scheduled execution support
+
+### 🚨 AWS EC2 Spot Interruption Notification
+**Location:** `aws-ec2-spot-interruption-notification/`
+
+Automated notification system for AWS EC2 Spot Instance interruption warnings. Monitors spot instance interruption events and sends alerts via multiple channels including SNS, Google Chat, and SMTP email.
+
+**Key Features:**
+- Multi-channel notifications (SNS, Google Chat, SMTP email)
+- ECS service detection on interrupted instances
+- Flexible AWS authentication methods
+- CloudFormation deployment with automated scripts
+- Real-time spot interruption monitoring
+- Service impact assessment and reporting
 
 ### 🔐 AWS IAM Identity & SSO Management
 **Location:** `aws-iam-identity-accounts-sso/`
