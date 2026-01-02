@@ -16,7 +16,7 @@
 		"from_email": "<sender_email>"
 	},
 	"emailNotification": {
-		"email_subject": "🚨 SPOT Interruption Alert",
+		"email_subject": "EC2 Spot Instance Interruption Alert",
 		"subject_prefix": "Example",
 		"to": [
 			"<recipient_email>"

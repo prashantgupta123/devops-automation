@@ -10,7 +10,8 @@
                 "ecs:ListTasks",
                 "ecs:DescribeTasks",
                 "ecs:DescribeServices",
-                "sns:Publish"
+                "sns:Publish",
+                "cloudwatch:PutMetricData"
             ],
             "Resource": "*"
         }

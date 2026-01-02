@@ -30,6 +30,50 @@ Parameters:
     Description: Enable Google Chat notifications
     Default: 'true'
     AllowedValues: ['true', 'false']
+  EnableSlack:
+    Type: String
+    Description: Enable Slack notifications
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+  EnableJira:
+    Type: String
+    Description: Enable JIRA ticket creation
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+  SlackWebhookUrl:
+    Type: String
+    Description: Slack webhook URL
+    Default: ''
+    NoEcho: true
+  CriticalServices:
+    Type: String
+    Description: Comma-separated list of critical services
+    Default: 'web-service,api-service'
+  MaintenanceStart:
+    Type: String
+    Description: Maintenance window start time (HH:MM)
+    Default: '02:00'
+  MaintenanceEnd:
+    Type: String
+    Description: Maintenance window end time (HH:MM)
+    Default: '04:00'
+  JiraUrl:
+    Type: String
+    Description: JIRA base URL
+    Default: ''
+  JiraUsername:
+    Type: String
+    Description: JIRA username
+    Default: ''
+  JiraToken:
+    Type: String
+    Description: JIRA API token
+    Default: ''
+    NoEcho: true
+  JiraProject:
+    Type: String
+    Description: JIRA project key
+    Default: 'INFRA'
 
   Project:
     Type: String
@@ -90,6 +134,10 @@ Resources:
                   - ecs:DescribeTasks
                   - ecs:DescribeServices
                 Resource: "*"
+              - Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricData
+                Resource: "*"
       Tags:
         - Key: 'Name'
           Value: !Sub '${NamePrefix}-role'
@@ -127,6 +175,17 @@ Resources:
           ENABLE_SNS: !Ref EnableSNS
           ENABLE_EMAIL: !Ref EnableEmail
           ENABLE_CHAT: !Ref EnableChat
+          ENABLE_SLACK: !Ref EnableSlack
+          ENABLE_JIRA: !Ref EnableJira
+          SLACK_WEBHOOK_URL: !Ref SlackWebhookUrl
+          CRITICAL_SERVICES: !Ref CriticalServices
+          MAINTENANCE_START: !Ref MaintenanceStart
+          MAINTENANCE_END: !Ref MaintenanceEnd
+          MIN_CAPACITY_THRESHOLD: '2'
+          JIRA_URL: !Ref JiraUrl
+          JIRA_USERNAME: !Ref JiraUsername
+          JIRA_TOKEN: !Ref JiraToken
+          JIRA_PROJECT: !Ref JiraProject
       Tags:
         - Key: 'Name'
           Value: !Sub '${NamePrefix}-function'

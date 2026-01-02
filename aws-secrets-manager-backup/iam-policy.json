@@ -23,17 +23,23 @@
       "Effect": "Allow",
       "Action": [
         "s3:PutObject",
-        "s3:PutObjectAcl",
         "s3:GetObject"
       ],
-      "Resource": "arn:aws:s3:::secrets-manager-backup-bucket/*"
+      "Resource": "arn:aws:s3:::*/*"
     },
     {
       "Effect": "Allow",
       "Action": [
         "s3:ListBucket"
       ],
-      "Resource": "arn:aws:s3:::secrets-manager-backup-bucket"
+      "Resource": "arn:aws:s3:::*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sts:AssumeRole"
+      ],
+      "Resource": "*"
     }
   ]
 }

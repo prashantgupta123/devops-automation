@@ -8,12 +8,24 @@ STACK_NAME="spot-interruption"
 TEMPLATE_FILE="cloudformation-template.yaml"
 LAMBDA_ZIP="lambda-deployment.zip"
 
-# Parameters (update these values)
+# Notification Settings
 SNS_TOPIC_ARN=""
 GOOGLE_CHAT_WEBHOOK=""
 ENABLE_SNS="true"
 ENABLE_EMAIL="false"
 ENABLE_CHAT="true"
+
+# Enhancement Settings
+ENABLE_SLACK="false"
+ENABLE_JIRA="false"
+SLACK_WEBHOOK_URL=""
+CRITICAL_SERVICES="web-service,api-service"
+MAINTENANCE_START="02:00"
+MAINTENANCE_END="04:00"
+JIRA_URL=""
+JIRA_USERNAME=""
+JIRA_TOKEN=""
+JIRA_PROJECT="INFRA"
 
 echo "Starting Spot Interruption Lambda deployment..."
 
@@ -32,6 +44,16 @@ aws cloudformation deploy \
     EnableSNS="$ENABLE_SNS" \
     EnableEmail="$ENABLE_EMAIL" \
     EnableChat="$ENABLE_CHAT" \
+    EnableSlack="$ENABLE_SLACK" \
+    EnableJira="$ENABLE_JIRA" \
+    SlackWebhookUrl="$SLACK_WEBHOOK_URL" \
+    CriticalServices="$CRITICAL_SERVICES" \
+    MaintenanceStart="$MAINTENANCE_START" \
+    MaintenanceEnd="$MAINTENANCE_END" \
+    JiraUrl="$JIRA_URL" \
+    JiraUsername="$JIRA_USERNAME" \
+    JiraToken="$JIRA_TOKEN" \
+    JiraProject="$JIRA_PROJECT" \
   --capabilities CAPABILITY_NAMED_IAM
 
 # Get Lambda function name from stack outputs

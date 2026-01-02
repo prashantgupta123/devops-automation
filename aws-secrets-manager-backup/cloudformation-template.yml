@@ -87,13 +87,16 @@ Resources:
               - Effect: Allow
                 Action:
                   - s3:PutObject
-                  - s3:PutObjectAcl
                   - s3:GetObject
                 Resource: !Sub '${SecretsBackupBucket}/*'
               - Effect: Allow
                 Action:
                   - s3:ListBucket
                 Resource: !Ref SecretsBackupBucket
+              - Effect: Allow
+                Action:
+                  - sts:AssumeRole
+                Resource: '*'
       Tags:
         - Key: Name
           Value: !Sub 'SecretsManagerBackupRole-${Environment}'
