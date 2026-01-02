@@ -14,6 +14,7 @@ devops-automation/
 ├── aws-ec2-backup-check/              # EC2 backup validation automation
 ├── aws-ec2-spot-interruption-notification/ # EC2 Spot Instance interruption alerts
 ├── aws-ecs-service-monitoring/        # ECS service monitoring and alerting
+├── aws-ecs-service-task-recycle/      # ECS service task sequential recycling
 ├── aws-guardduty-notification/        # GuardDuty multi-channel alert system
 ├── aws-iam-identity-accounts-sso/     # AWS SSO credential automation
 ├── aws-news/                          # AWS news aggregation service
@@ -187,6 +188,22 @@ Automated monitoring solution for AWS ECS services that detects service failures
 - SNS notification integration
 - Terraform infrastructure as code
 - Support for multiple clusters and services
+
+### 🔄 AWS ECS Service Task Recycle
+**Location:** `aws-ecs-service-task-recycle/`
+
+Automated Lambda function for recycling AWS ECS service tasks sequentially, maintaining service availability during the process. Unlike ECS force deployment which replaces all tasks in parallel, this solution stops and replaces tasks one by one with configurable wait times.
+
+**Key Features:**
+- Sequential task recycling instead of parallel replacement
+- Service stability checks between each task replacement
+- Optional capacity management to maintain availability
+- Configurable wait time between task replacements
+- Support for services with Application Auto Scaling
+- Flexible AWS authentication methods
+- Optional SMTP email notifications
+- CloudFormation deployment with EventInvokeConfig (0 retries)
+- Event-driven execution with customizable parameters
 
 ### 🛡️ AWS GuardDuty Multi-Channel Notification
 **Location:** `aws-guardduty-notification/`

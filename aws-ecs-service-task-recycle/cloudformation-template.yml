@@ -1,0 +1,136 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'ECS Service Task Recycle Lambda Function'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: production
+    Description: Environment name
+  
+  Project:
+    Type: String
+    Default: ecs-task-recycle
+    Description: Project name
+  
+  Owner:
+    Type: String
+    Default: DevOps
+    Description: Owner name
+
+Resources:
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Project}-lambda-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: ECSTaskRecyclePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecs:DescribeServices
+                  - ecs:UpdateService
+                  - ecs:ListTasks
+                  - ecs:StopTask
+                  - ecs:DescribeTasks
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - application-autoscaling:DescribeScalableTargets
+                  - application-autoscaling:RegisterScalableTarget
+                Resource: '*'
+      Tags:
+        - Key: Name
+          Value: !Sub '${Project}-lambda-role'
+        - Key: Project
+          Value: !Ref Project
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: CreatedBy
+          Value: CloudFormation
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${Project}-function'
+      Runtime: python3.13
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 900
+      MemorySize: 256
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {'statusCode': 200}
+      Tags:
+        - Key: Name
+          Value: !Sub '${Project}-function'
+        - Key: Project
+          Value: !Ref Project
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: CreatedBy
+          Value: CloudFormation
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  LambdaEventInvokeConfig:
+    Type: AWS::Lambda::EventInvokeConfig
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Qualifier: $LATEST
+      MaximumRetryAttempts: 0
+
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${LambdaFunction}'
+      RetentionInDays: 7
+      Tags:
+        - Key: Name
+          Value: !Sub '${Project}-logs'
+        - Key: Project
+          Value: !Ref Project
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: CreatedBy
+          Value: CloudFormation
+        - Key: ManagedBy
+          Value: CloudFormation
+
+Outputs:
+  LambdaFunctionArn:
+    Description: Lambda Function ARN
+    Value: !GetAtt LambdaFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-LambdaArn'
+  
+  LambdaFunctionName:
+    Description: Lambda Function Name
+    Value: !Ref LambdaFunction
+    Export:
+      Name: !Sub '${AWS::StackName}-LambdaName'
+  
+  LambdaRoleArn:
+    Description: Lambda Execution Role ARN
+    Value: !GetAtt LambdaExecutionRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-RoleArn'
