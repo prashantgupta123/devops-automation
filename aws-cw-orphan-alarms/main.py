@@ -1,473 +1,746 @@
-import AWSSession
-import Notification
-import yaml
+"""CloudWatch Orphan Alarm Detector.
+
+Identifies and optionally deletes CloudWatch alarms monitoring non-existent AWS resources.
+Supports EC2, RDS, ECS, Lambda, ALB, Target Groups, and SQS services.
+"""
+
 import json
 import logging
 import sys
+from pathlib import Path
+from typing import Dict, List, Any, Optional
+
+import yaml
 import xlsxwriter
+from boto3.session import Session
 
-# Creating an object
-logger = logging.getLogger()
-# Setting the threshold of logger to DEBUG
-logger.setLevel(logging.INFO)
-# setting stdout for logging
-handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.INFO)
-logger.addHandler(handler)
+import AWSSession
+from Notification import EmailNotifier
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+logger = logging.getLogger(__name__)
 
-def get_ec2_details(ec2_client, max_results):
-    ec2_details = []
-    next_token = None
-    while True:
-        if next_token is not None and next_token != "" and next_token:
-            response = ec2_client.describe_instances(MaxResults=max_results, NextToken=next_token)
-        else:
-            response = ec2_client.describe_instances(MaxResults=max_results)
-        for reservation in response['Reservations']:
-            for instance in reservation['Instances']:
-                ec2_details.append({"InstanceId": instance['InstanceId']})
-        if 'NextToken' in response and response["NextToken"] is not None and response['NextToken'] != "":
-            next_token = response['NextToken']
-        else:
-            break
-    return ec2_details
+# Constants
+MAX_RESULTS = 100
+CONFIG_FILE = "inputs.yml"
+SERVICE_CONFIG_FILE = "input.json"
+OUTPUT_FILE = "output.json"
+REPORT_FILE = "Inventory.xlsx"
 
 
-def get_target_group_details(elbv2_client, max_results):
-    targetgroup_details = []
-    target_groups = []
-    next_token = None
-    while True:
-        if next_token is not None and next_token != "" and next_token:
-            response = elbv2_client.describe_target_groups(
-                Marker = next_token,
-                PageSize = max_results,
-            )
-        else:
-            response = elbv2_client.describe_target_groups(
-                PageSize = max_results,
-            )
-        for target_group in response['TargetGroups']:
-            for load_balancer in target_group["LoadBalancerArns"]:
-                target_group_data = {
-                    "LoadBalancer": load_balancer.split("loadbalancer/")[1],
-                    "TargetGroup": "targetgroup/" + target_group['TargetGroupArn'].split("targetgroup/")[1]
-                }
-                targetgroup_details.append(target_group_data)
-            target_groups.append({"TargetGroup": "targetgroup/" + target_group['TargetGroupArn'].split("targetgroup/")[1]})
-        if 'NextMarker' in response and response["NextMarker"] is not None and response['NextMarker'] != "":
-            next_token = response['NextMarker']
-        else:
-            break
-    return target_groups, targetgroup_details
-
-
-def get_load_balancer_details(elbv2_client, max_results):
-    load_balancer_details = []
-    next_token = None
-    while True:
-        if next_token is not None and next_token != "" and next_token:
-            response = elbv2_client.describe_load_balancers(
-                Marker = next_token,
-                PageSize = max_results
-            )
-        else:
-            response = elbv2_client.describe_load_balancers(
-                PageSize = max_results
-            )
-        for load_balancer in response['LoadBalancers']:
-            load_balancer_data = {
-                "LoadBalancer": load_balancer['LoadBalancerArn'].split("loadbalancer/")[1]
-            }
-            load_balancer_details.append(load_balancer_data)
-        if 'NextMarker' in response and response["NextMarker"] is not None and response['NextMarker'] != "":
-            next_token = response['NextMarker']
-        else:
-            break
-    return load_balancer_details
-
-
-def get_rds_cluster_details(rds_client, max_results):
-    rds_details = []
-    next_token = None
-    filters = [{
-        'Name': 'engine',
-        'Values': [
-            "mysql",
-            "aurora-mysql",
-            "postgres",
-            "aurora-postgresql"
-        ]
-    }]
-    while True:
-        if next_token is not None and next_token != "" and next_token:
-            response = rds_client.describe_db_clusters(
-                MaxRecords=max_results,
-                Marker=next_token,
-                Filters=filters
-            )
-        else:
-            response = rds_client.describe_db_clusters(
-                MaxRecords=max_results,
-                Filters=filters
-            )
-        for cluster in response['DBClusters']:
-            rds_details.append({
-                'DBClusterIdentifier': cluster['DBClusterIdentifier']
-            })
-        if 'Marker' in response and response["Marker"] is not None and response['Marker'] != "":
-            next_token = response['Marker']
-        else:
-            break
-    return rds_details
-
-
-def get_rds_instance_details(rds_client, max_results):
-    rds_details = []
-    next_token = None
-    filters = [{
-        'Name': 'engine',
-        'Values': [
-            "mysql",
-            "aurora-mysql",
-            "postgres",
-            "aurora-postgresql"
-        ]
-    }]
-    while True:
-        if next_token is not None and next_token != "" and next_token:
-            response = rds_client.describe_db_instances(
-                MaxRecords=max_results,
-                Marker=next_token,
-                Filters=filters
-            )
-        else:
-            response = rds_client.describe_db_instances(
-                MaxRecords=max_results,
-                Filters=filters
-            )
-        for instance in response['DBInstances']:
-            rds_details.append({
-                'DBInstanceIdentifier': instance['DBInstanceIdentifier']
-            })
-        if 'Marker' in response and response["Marker"] is not None and response['Marker'] != "":
-            next_token = response['Marker']
-        else:
-            break
-    return rds_details
-
-
-def get_ecs_cluster_details(ecs_client, max_results):
-    ecs_details = []
-    next_token = None
-    while True:
-        if next_token is not None and next_token != "" and next_token:
-            response = ecs_client.list_clusters(maxResults=max_results, nextToken=next_token)
-        else:
-            response = ecs_client.list_clusters(maxResults=max_results)
-        for cluster_arn in response['clusterArns']:
-            ecs_details.append({"ClusterName": cluster_arn.split("cluster/")[1]})
-        if 'nextToken' in response and response["nextToken"] is not None and response['nextToken'] != "":
-            next_token = response['nextToken']
-        else:
-            break
-    return ecs_details
-
-
-def get_ecs_service_details(ecs_client, max_results):
-    ecs_details = []
-    next_token = None
-    while True:
-        if next_token is not None and next_token != "" and next_token:
-            response = ecs_client.list_clusters(maxResults=max_results, nextToken=next_token)
-        else:
-            response = ecs_client.list_clusters(maxResults=max_results)
-        for cluster_arn in response['clusterArns']:
-            service_next_token = None
-            while True:
-                if service_next_token is not None and service_next_token != "" and service_next_token:
-                    service_response = ecs_client.list_services(cluster=cluster_arn, maxResults=max_results, nextToken=service_next_token)
-                else:
-                    service_response = ecs_client.list_services(cluster=cluster_arn, maxResults=max_results)
-                for service_arn in service_response['serviceArns']:
-                    ecs_details.append({
-                        "ClusterName": cluster_arn.split("cluster/")[1],
-                        "ServiceName": service_arn.split("/")[-1]
-                    })
-                if 'nextToken' in service_response and service_response["nextToken"] is not None and service_response['nextToken'] != "":
-                    service_next_token = service_response['nextToken']
-                else:
-                    break
-        if 'nextToken' in response and response["nextToken"] is not None and response['nextToken'] != "":
-            next_token = response['nextToken']
-        else:
-            break
-    return ecs_details
-
-
-def get_lambda_details(lambda_client, max_results):
-    ecs_details = []
-    next_token = None
-    while True:
-        if next_token is not None and next_token != "" and next_token:
-            response = lambda_client.list_functions(MaxItems=max_results, Marker=next_token)
-        else:
-            response = lambda_client.list_functions(MaxItems=max_results)
-        for function in response['Functions']:
-            ecs_details.append({"FunctionName": function["FunctionName"]})
-        if 'NextMarker' in response and response["NextMarker"] is not None and response['NextMarker'] != "":
-            next_token = response['NextMarker']
-        else:
-            break
-    return ecs_details
-
-
-def get_lambda_resource_details(lambda_client, max_results):
-    ecs_details = []
-    next_token = None
-    while True:
-        if next_token is not None and next_token != "" and next_token:
-            response = lambda_client.list_functions(MaxItems=max_results, Marker=next_token)
-        else:
-            response = lambda_client.list_functions(MaxItems=max_results)
-        for function in response['Functions']:
-            version_next_token = None
-            while True:
-                if version_next_token is not None and version_next_token != "" and version_next_token:
-                    version_response = lambda_client.list_versions_by_function(FunctionName=function["FunctionName"], MaxItems=max_results, Marker=version_next_token)
-                else:
-                    version_response = lambda_client.list_versions_by_function(FunctionName=function["FunctionName"], MaxItems=max_results)
-                for version_function in version_response['Versions']:
-                    if version_function["Version"] == "$LATEST":
-                        ecs_details.append({
-                            "FunctionName": version_function["FunctionName"],
-                            "Resource": version_function["FunctionName"]
-                        })
-                    else:
-                        ecs_details.append({
-                            "FunctionName": version_function["FunctionName"],
-                            "Resource": version_function["FunctionName"] + ":" + version_function["Version"]
-                        })
-                if 'NextMarker' in version_response and version_response["NextMarker"] is not None and version_response['NextMarker'] != "":
-                    version_next_token = version_response['NextMarker']
-                else:
-                    break
-        if 'NextMarker' in response and response["NextMarker"] is not None and response['NextMarker'] != "":
-            next_token = response['NextMarker']
-        else:
-            break
-    return ecs_details
-
-
-def get_sqs_details(sqs_client, max_results):
-    sqs_details = []
-    next_token = None
-    while True:
-        if next_token is not None and next_token != "" and next_token:
-            response = sqs_client.list_queues(MaxResults=max_results, NextToken=next_token)
-        else:
-            response = sqs_client.list_queues(MaxResults=max_results)
-        for queue_url in response['QueueUrls']:
-            sqs_details.append({"QueueName": queue_url.split("/")[-1]})
-        if 'NextToken' in response and response["NextToken"] is not None and response['NextToken'] != "":
-            next_token = response['NextToken']
-        else:
-            break
-    return sqs_details
-
-
-def list_alarms_for_aws_resources(cloudwatch_client, max_results):
-    cloudwatch_alarms = []
-    next_token = None
-    while True:
-        if next_token is not None and next_token != "" and next_token:
-            response = cloudwatch_client.describe_alarms(MaxRecords=max_results, NextToken=next_token)
-        else:
-            response = cloudwatch_client.describe_alarms(MaxRecords=max_results)
-
-        for alarm in response['MetricAlarms']:
+class ResourceDiscovery:
+    """Discovers active AWS resources across multiple services."""
+    
+    def __init__(self, session: Session, region: str):
+        """
+        Initialize resource discovery with AWS session.
+        
+        Args:
+            session: Configured boto3 session
+            region: AWS region name
+        """
+        self.session = session
+        self.region = region
+        self.clients = self._initialize_clients()
+    
+    def _initialize_clients(self) -> Dict[str, Any]:
+        """Initialize AWS service clients."""
+        return {
+            'ec2': self.session.client('ec2', region_name=self.region),
+            'elbv2': self.session.client('elbv2', region_name=self.region),
+            'rds': self.session.client('rds', region_name=self.region),
+            'ecs': self.session.client('ecs', region_name=self.region),
+            'lambda': self.session.client('lambda', region_name=self.region),
+            'sqs': self.session.client('sqs', region_name=self.region),
+            'cloudwatch': self.session.client('cloudwatch', region_name=self.region)
+        }
+    
+    def discover_all_resources(self) -> Dict[str, List[Dict[str, str]]]:
+        """
+        Discover all active resources across supported services.
+        
+        Returns:
+            Dictionary mapping service names to lists of resource identifiers
+        """
+        logger.info("Starting resource discovery across all services")
+        
+        return {
+            "EC2Instance": self._get_ec2_instances(),
+            "RDSCluster": self._get_rds_clusters(),
+            "RDSInstance": self._get_rds_instances(),
+            "TargetGroup": self._get_target_groups(),
+            "LoadBalancerTargetGroup": self._get_load_balancer_target_groups(),
+            "LoadBalancer": self._get_load_balancers(),
+            "ECSService": self._get_ecs_services(),
+            "ECSCluster": self._get_ecs_clusters(),
+            "Lambda": self._get_lambda_functions(),
+            "LambdaResource": self._get_lambda_versions(),
+            "SQS": self._get_sqs_queues()
+        }
+    
+    def _paginate_api_call(
+        self, 
+        api_func: callable, 
+        result_key: str,
+        token_key: str = 'NextToken',
+        **kwargs
+    ) -> List[Any]:
+        """
+        Generic pagination handler for AWS API calls.
+        
+        Args:
+            api_func: AWS API function to call
+            result_key: Key in response containing results
+            token_key: Key for pagination token
+            **kwargs: Additional arguments for API call
+        
+        Returns:
+            List of all paginated results
+        """
+        results = []
+        next_token = None
+        
+        while True:
             try:
-                if "Namespace" in alarm:
-                    cloudwatch_alarms.append({
-                        "AlarmName": alarm["AlarmName"],
-                        "Namespace": alarm["Namespace"],
-                        "Dimensions": alarm["Dimensions"]
-                    })
-                else:
-                    if "Metrics" in alarm:
-                        for metric in alarm["Metrics"]:
-                            if "MetricStat" in metric:
-                                cloudwatch_alarms.append({
-                                    "AlarmName": alarm["AlarmName"],
-                                    "Namespace": metric["MetricStat"]["Metric"]["Namespace"],
-                                    "Dimensions": metric["MetricStat"]["Metric"]["Dimensions"]
-                                })
-                    else:
-                        logger.error("No Alarm Metrics found: " + alarm["AlarmName"])
+                if next_token:
+                    kwargs[token_key] = next_token
+                
+                response = api_func(**kwargs)
+                results.extend(response.get(result_key, []))
+                
+                next_token = response.get(token_key)
+                if not next_token:
+                    break
+                    
             except Exception as e:
-                logger.error("Exception in alarm: " + alarm["AlarmName"])
-                logger.error(e)
+                logger.error("API pagination error: %s", e)
+                break
+        
+        return results
+    
+    def _get_ec2_instances(self) -> List[Dict[str, str]]:
+        """Get all EC2 instance IDs."""
+        logger.info("Discovering EC2 instances")
+        instances = []
+        
+        reservations = self._paginate_api_call(
+            self.clients['ec2'].describe_instances,
+            'Reservations',
+            MaxResults=MAX_RESULTS
+        )
+        
+        for reservation in reservations:
+            for instance in reservation.get('Instances', []):
+                instances.append({"InstanceId": instance['InstanceId']})
+        
+        logger.info("Found %d EC2 instances", len(instances))
+        return instances
+    
+    def _get_rds_clusters(self) -> List[Dict[str, str]]:
+        """Get all RDS cluster identifiers."""
+        logger.info("Discovering RDS clusters")
+        
+        filters = [{
+            'Name': 'engine',
+            'Values': ['mysql', 'aurora-mysql', 'postgres', 'aurora-postgresql']
+        }]
+        
+        clusters = self._paginate_api_call(
+            self.clients['rds'].describe_db_clusters,
+            'DBClusters',
+            token_key='Marker',
+            MaxRecords=MAX_RESULTS,
+            Filters=filters
+        )
+        
+        result = [{"DBClusterIdentifier": c['DBClusterIdentifier']} for c in clusters]
+        logger.info("Found %d RDS clusters", len(result))
+        return result
+    
+    def _get_rds_instances(self) -> List[Dict[str, str]]:
+        """Get all RDS instance identifiers."""
+        logger.info("Discovering RDS instances")
+        
+        filters = [{
+            'Name': 'engine',
+            'Values': ['mysql', 'aurora-mysql', 'postgres', 'aurora-postgresql']
+        }]
+        
+        instances = self._paginate_api_call(
+            self.clients['rds'].describe_db_instances,
+            'DBInstances',
+            token_key='Marker',
+            MaxRecords=MAX_RESULTS,
+            Filters=filters
+        )
+        
+        result = [{"DBInstanceIdentifier": i['DBInstanceIdentifier']} for i in instances]
+        logger.info("Found %d RDS instances", len(result))
+        return result
+    
+    def _get_load_balancers(self) -> List[Dict[str, str]]:
+        """Get all load balancer ARNs."""
+        logger.info("Discovering load balancers")
+        
+        load_balancers = self._paginate_api_call(
+            self.clients['elbv2'].describe_load_balancers,
+            'LoadBalancers',
+            token_key='Marker',
+            PageSize=MAX_RESULTS
+        )
+        
+        result = [
+            {"LoadBalancer": lb['LoadBalancerArn'].split("loadbalancer/")[1]}
+            for lb in load_balancers
+        ]
+        logger.info("Found %d load balancers", len(result))
+        return result
+    
+    def _get_target_groups(self) -> List[Dict[str, str]]:
+        """Get all target group ARNs."""
+        logger.info("Discovering target groups")
+        
+        target_groups = self._paginate_api_call(
+            self.clients['elbv2'].describe_target_groups,
+            'TargetGroups',
+            token_key='Marker',
+            PageSize=MAX_RESULTS
+        )
+        
+        result = [
+            {"TargetGroup": f"targetgroup/{tg['TargetGroupArn'].split('targetgroup/')[1]}"}
+            for tg in target_groups
+        ]
+        logger.info("Found %d target groups", len(result))
+        return result
+    
+    def _get_load_balancer_target_groups(self) -> List[Dict[str, str]]:
+        """Get target groups with their associated load balancers."""
+        logger.info("Discovering load balancer target group associations")
+        
+        target_groups = self._paginate_api_call(
+            self.clients['elbv2'].describe_target_groups,
+            'TargetGroups',
+            token_key='Marker',
+            PageSize=MAX_RESULTS
+        )
+        
+        result = []
+        for tg in target_groups:
+            tg_arn = f"targetgroup/{tg['TargetGroupArn'].split('targetgroup/')[1]}"
+            for lb_arn in tg.get("LoadBalancerArns", []):
+                result.append({
+                    "LoadBalancer": lb_arn.split("loadbalancer/")[1],
+                    "TargetGroup": tg_arn
+                })
+        
+        logger.info("Found %d load balancer-target group associations", len(result))
+        return result
+    
+    def _get_ecs_clusters(self) -> List[Dict[str, str]]:
+        """Get all ECS cluster names."""
+        logger.info("Discovering ECS clusters")
+        
+        cluster_arns = self._paginate_api_call(
+            self.clients['ecs'].list_clusters,
+            'clusterArns',
+            token_key='nextToken',
+            maxResults=MAX_RESULTS
+        )
+        
+        result = [
+            {"ClusterName": arn.split("cluster/")[1]}
+            for arn in cluster_arns
+        ]
+        logger.info("Found %d ECS clusters", len(result))
+        return result
+    
+    def _get_ecs_services(self) -> List[Dict[str, str]]:
+        """Get all ECS services across all clusters."""
+        logger.info("Discovering ECS services")
+        
+        cluster_arns = self._paginate_api_call(
+            self.clients['ecs'].list_clusters,
+            'clusterArns',
+            token_key='nextToken',
+            maxResults=MAX_RESULTS
+        )
+        
+        services = []
+        for cluster_arn in cluster_arns:
+            cluster_name = cluster_arn.split("cluster/")[1]
+            
+            service_arns = self._paginate_api_call(
+                self.clients['ecs'].list_services,
+                'serviceArns',
+                token_key='nextToken',
+                cluster=cluster_arn,
+                maxResults=MAX_RESULTS
+            )
+            
+            for service_arn in service_arns:
+                services.append({
+                    "ClusterName": cluster_name,
+                    "ServiceName": service_arn.split("/")[-1]
+                })
+        
+        logger.info("Found %d ECS services", len(services))
+        return services
+    
+    def _get_lambda_functions(self) -> List[Dict[str, str]]:
+        """Get all Lambda function names."""
+        logger.info("Discovering Lambda functions")
+        
+        functions = self._paginate_api_call(
+            self.clients['lambda'].list_functions,
+            'Functions',
+            token_key='Marker',
+            MaxItems=MAX_RESULTS
+        )
+        
+        result = [{"FunctionName": f["FunctionName"]} for f in functions]
+        logger.info("Found %d Lambda functions", len(result))
+        return result
+    
+    def _get_lambda_versions(self) -> List[Dict[str, str]]:
+        """Get all Lambda function versions and aliases."""
+        logger.info("Discovering Lambda function versions")
+        
+        functions = self._paginate_api_call(
+            self.clients['lambda'].list_functions,
+            'Functions',
+            token_key='Marker',
+            MaxItems=MAX_RESULTS
+        )
+        
+        versions = []
+        for function in functions:
+            function_name = function["FunctionName"]
+            
+            version_list = self._paginate_api_call(
+                self.clients['lambda'].list_versions_by_function,
+                'Versions',
+                token_key='Marker',
+                FunctionName=function_name,
+                MaxItems=MAX_RESULTS
+            )
+            
+            for version in version_list:
+                resource = (
+                    version["FunctionName"] if version["Version"] == "$LATEST"
+                    else f"{version['FunctionName']}:{version['Version']}"
+                )
+                versions.append({
+                    "FunctionName": version["FunctionName"],
+                    "Resource": resource
+                })
+        
+        logger.info("Found %d Lambda function versions", len(versions))
+        return versions
+    
+    def _get_sqs_queues(self) -> List[Dict[str, str]]:
+        """Get all SQS queue names."""
+        logger.info("Discovering SQS queues")
+        
+        queue_urls = self._paginate_api_call(
+            self.clients['sqs'].list_queues,
+            'QueueUrls',
+            MaxResults=MAX_RESULTS
+        )
+        
+        result = [{"QueueName": url.split("/")[-1]} for url in queue_urls]
+        logger.info("Found %d SQS queues", len(result))
+        return result
 
-        if 'NextToken' in response and response["NextToken"] is not None and response['NextToken'] != "":
-            next_token = response['NextToken']
-        else:
-            break
-    return cloudwatch_alarms
+
+class OrphanAlarmDetector:
+    """Detects orphan CloudWatch alarms by comparing with active resources."""
+    
+    def __init__(self, cloudwatch_client: Any):
+        """
+        Initialize orphan alarm detector.
+        
+        Args:
+            cloudwatch_client: Boto3 CloudWatch client
+        """
+        self.cloudwatch_client = cloudwatch_client
+    
+    def get_all_alarms(self) -> List[Dict[str, Any]]:
+        """
+        Retrieve all CloudWatch alarms.
+        
+        Returns:
+            List of alarm dictionaries with name, namespace, and dimensions
+        """
+        logger.info("Retrieving all CloudWatch alarms")
+        alarms = []
+        next_token = None
+        
+        while True:
+            try:
+                kwargs = {'MaxRecords': MAX_RESULTS}
+                if next_token:
+                    kwargs['NextToken'] = next_token
+                
+                response = self.cloudwatch_client.describe_alarms(**kwargs)
+                
+                for alarm in response.get('MetricAlarms', []):
+                    alarms.extend(self._extract_alarm_metrics(alarm))
+                
+                next_token = response.get('NextToken')
+                if not next_token:
+                    break
+                    
+            except Exception as e:
+                logger.error("Error retrieving alarms: %s", e)
+                break
+        
+        logger.info("Found %d CloudWatch alarms", len(alarms))
+        return alarms
+    
+    @staticmethod
+    def _extract_alarm_metrics(alarm: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Extract metrics from alarm definition.
+        
+        Handles both simple metric alarms and metric math alarms.
+        
+        Args:
+            alarm: CloudWatch alarm definition
+        
+        Returns:
+            List of alarm metric dictionaries
+        """
+        alarm_metrics = []
+        
+        try:
+            if "Namespace" in alarm:
+                # Simple metric alarm
+                alarm_metrics.append({
+                    "AlarmName": alarm["AlarmName"],
+                    "Namespace": alarm["Namespace"],
+                    "Dimensions": alarm.get("Dimensions", [])
+                })
+            elif "Metrics" in alarm:
+                # Metric math alarm
+                for metric in alarm["Metrics"]:
+                    if "MetricStat" in metric:
+                        alarm_metrics.append({
+                            "AlarmName": alarm["AlarmName"],
+                            "Namespace": metric["MetricStat"]["Metric"]["Namespace"],
+                            "Dimensions": metric["MetricStat"]["Metric"].get("Dimensions", [])
+                        })
+            else:
+                logger.warning("Alarm has no metrics: %s", alarm["AlarmName"])
+                
+        except Exception as e:
+            logger.error("Error extracting metrics from alarm %s: %s", 
+                        alarm.get("AlarmName", "unknown"), e)
+        
+        return alarm_metrics
+    
+    def find_orphan_alarms(
+        self,
+        service_config: Dict[str, Any],
+        alarms: List[Dict[str, Any]],
+        resources: Dict[str, List[Dict[str, str]]]
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """
+        Identify orphan alarms across all services.
+        
+        Args:
+            service_config: Service dimension configuration
+            alarms: List of all CloudWatch alarms
+            resources: Dictionary of active resources by service
+        
+        Returns:
+            Dictionary mapping service names to lists of orphan alarms
+        """
+        logger.info("Analyzing alarms for orphans")
+        orphan_alarms = {}
+        
+        for service_name, config in service_config.items():
+            logger.info("Checking %s for orphan alarms", service_name)
+            
+            if service_name not in resources:
+                logger.warning("No resources found for service: %s", service_name)
+                continue
+            
+            service_orphans = []
+            for namespace in config['Namespace']:
+                service_orphans.extend(
+                    self._check_service_orphans(
+                        config, namespace, alarms, resources[service_name]
+                    )
+                )
+            
+            if service_orphans:
+                orphan_alarms[service_name] = service_orphans
+                logger.info("Found %d orphan alarms for %s", 
+                           len(service_orphans), service_name)
+        
+        return orphan_alarms
+    
+    @staticmethod
+    def _check_service_orphans(
+        resource_config: Dict[str, List[str]],
+        namespace: str,
+        alarms: List[Dict[str, Any]],
+        service_resources: List[Dict[str, str]]
+    ) -> List[Dict[str, Any]]:
+        """
+        Check for orphan alarms for a specific service.
+        
+        Args:
+            resource_config: Service dimension configuration
+            namespace: CloudWatch namespace to check
+            alarms: List of all alarms
+            service_resources: List of active resources for this service
+        
+        Returns:
+            List of orphan alarms for this service
+        """
+        orphans = []
+        required_dimensions = resource_config['Dimension']
+        excluded_dimensions = resource_config.get('ExcludeDimension', [])
+        
+        for alarm in alarms:
+            if alarm['Namespace'] != namespace:
+                continue
+            
+            # Check if alarm has required dimensions
+            alarm_dims = {d['Name']: d['Value'] for d in alarm['Dimensions']}
+            
+            if not OrphanAlarmDetector._has_required_dimensions(
+                alarm_dims, required_dimensions, excluded_dimensions
+            ):
+                continue
+            
+            # Check if alarm matches any active resource
+            if not OrphanAlarmDetector._matches_any_resource(
+                alarm_dims, required_dimensions, service_resources
+            ):
+                orphans.append(alarm)
+        
+        return orphans
+    
+    @staticmethod
+    def _has_required_dimensions(
+        alarm_dims: Dict[str, str],
+        required: List[str],
+        excluded: List[str]
+    ) -> bool:
+        """Check if alarm has all required dimensions and no excluded ones."""
+        has_all_required = all(dim in alarm_dims for dim in required)
+        has_no_excluded = not any(dim in alarm_dims for dim in excluded if dim)
+        return has_all_required and has_no_excluded
+    
+    @staticmethod
+    def _matches_any_resource(
+        alarm_dims: Dict[str, str],
+        required_dims: List[str],
+        resources: List[Dict[str, str]]
+    ) -> bool:
+        """Check if alarm dimensions match any active resource."""
+        for resource in resources:
+            if all(alarm_dims.get(dim) == resource.get(dim) for dim in required_dims):
+                return True
+        return False
+    
+    def delete_orphan_alarms(
+        self, 
+        orphan_alarms: Dict[str, List[Dict[str, Any]]]
+    ) -> None:
+        """
+        Delete identified orphan alarms.
+        
+        Args:
+            orphan_alarms: Dictionary of orphan alarms by service
+        """
+        for service, alarms in orphan_alarms.items():
+            alarm_names = [alarm["AlarmName"] for alarm in alarms]
+            
+            if not alarm_names:
+                continue
+            
+            try:
+                self.cloudwatch_client.delete_alarms(AlarmNames=alarm_names)
+                logger.info("Deleted %d orphan alarms for %s", 
+                           len(alarm_names), service)
+            except Exception as e:
+                logger.error("Error deleting alarms for %s: %s", service, e)
 
 
-def check_alarm_aws_resources_with_resource_list(resource_details, namespace, alarms, service_data):
-    unused_alarms = []
-    dimensions = resource_details['Dimension']
-    exclude_dimension = resource_details['ExcludeDimension']
-    for alarm in alarms:
-        if alarm['Namespace'] == namespace:
-            alarm_dimensions = {dimension['Name']: dimension['Value'] for dimension in alarm['Dimensions']}
-            all_dimension_present = []
-            for resource_dimension in dimensions:
-                if resource_dimension in alarm_dimensions:
-                    all_dimension_present.append(True)
-                else:
-                    all_dimension_present.append(False)
-            for resource_dimension in exclude_dimension:
-                if resource_dimension in alarm_dimensions:
-                    all_dimension_present.append(False)
-            dimension_present = all(all_dimension_present)
+class ReportGenerator:
+    """Generates Excel reports for orphan alarms."""
+    
+    @staticmethod
+    def create_excel_report(
+        service_config: Dict[str, Any],
+        orphan_alarms: Dict[str, List[Dict[str, Any]]],
+        output_path: str = REPORT_FILE
+    ) -> None:
+        """
+        Create Excel report with orphan alarm details.
+        
+        Args:
+            service_config: Service dimension configuration
+            orphan_alarms: Dictionary of orphan alarms by service
+            output_path: Path for output Excel file
+        """
+        logger.info("Generating Excel report: %s", output_path)
+        
+        workbook = xlsxwriter.Workbook(output_path)
+        cell_format = workbook.add_format({'text_wrap': True})
+        bold_format = workbook.add_format({'bold': True})
+        
+        for service, alarms in orphan_alarms.items():
+            if not alarms:
+                continue
+            
+            ReportGenerator._create_service_worksheet(
+                workbook, service, alarms, 
+                service_config[service]['Dimension'],
+                cell_format, bold_format
+            )
+        
+        workbook.close()
+        logger.info("Excel report generated successfully")
+    
+    @staticmethod
+    def _create_service_worksheet(
+        workbook: xlsxwriter.Workbook,
+        service_name: str,
+        alarms: List[Dict[str, Any]],
+        dimensions: List[str],
+        cell_format: Any,
+        bold_format: Any
+    ) -> None:
+        """Create worksheet for a specific service."""
+        worksheet = workbook.add_worksheet(service_name)
+        worksheet.set_row(0, 25)
+        
+        # Write headers
+        headers = ["AlarmName", "Namespace"] + dimensions
+        for col, header in enumerate(headers):
+            worksheet.write(0, col, header, bold_format)
+            worksheet.set_column(col, col, 50 if col > 1 else 70, cell_format)
+        
+        # Write alarm data
+        for row, alarm in enumerate(alarms, start=1):
+            alarm_dims = {d['Name']: d['Value'] for d in alarm['Dimensions']}
+            
+            worksheet.write(row, 0, alarm["AlarmName"])
+            worksheet.write(row, 1, alarm["Namespace"])
+            
+            for col, dim in enumerate(dimensions, start=2):
+                worksheet.write(row, col, alarm_dims.get(dim, ""))
 
-            if dimension_present:
-                resource_present = False
-                for resource in service_data:
-                    all_resource_present = []
-                    for resource_dimension in dimensions:
-                        if alarm_dimensions[resource_dimension] == resource[resource_dimension]:
-                            all_resource_present.append(True)
-                        else:
-                            all_resource_present.append(False)
-                    resource_present = all(all_resource_present)
-                    if resource_present:
-                        break
-                if not resource_present:
-                    unused_alarms.append(alarm)
-    return unused_alarms
 
-
-def delete_alarms(cloudwatch_client, service, alarm_names):
+def load_configuration(config_path: str) -> Dict[str, Any]:
+    """Load YAML configuration file."""
     try:
-        cloudwatch_client.delete_alarms(AlarmNames=alarm_names)
-        logger.error("Successfully deleted alarms for: " + service)
+        with open(config_path, 'r') as file:
+            return yaml.safe_load(file)
     except Exception as e:
-        logger.error("Error deleting alarms:", e)
+        logger.error("Error loading configuration from %s: %s", config_path, e)
+        raise
 
 
-def create_excel_report(request_data, input_data, output_data, cloudwatch_client):
-    workbook = xlsxwriter.Workbook('Inventory.xlsx')
-    cell_format = workbook.add_format()
-    cell_format.set_text_wrap()
-    for service in output_data:
-        if output_data[service]:
-            alarm_names = []
-            alarm_dimensions_headers = input_data[service]["Dimension"]
-            bold = workbook.add_format({'bold': True})
-            worksheet = workbook.add_worksheet(service)
-            worksheet.set_row(0, 25)
-            row = 0
-            col = 0
-            worksheet.write(row, col, "AlarmName", bold)
-            worksheet.set_column(col, col, 70, cell_format)
-            col += 1
-            worksheet.write(row, col, "Namespace", bold)
-            worksheet.set_column(col, col, 20, cell_format)
-            col += 1
-            for dimension in alarm_dimensions_headers:
-                worksheet.write(row, col, dimension, bold)
-                worksheet.set_column(col, col, 50, cell_format)
-                col += 1
-
-            for alarm in output_data[service]:
-                col = 0
-                row += 1
-                worksheet.write(row, col, alarm["AlarmName"])
-                col += 1
-                worksheet.write(row, col, alarm["Namespace"])
-                col += 1
-                alarm_dimensions = {dimension['Name']: dimension['Value'] for dimension in alarm['Dimensions']}
-                for dimension in alarm_dimensions_headers:
-                    worksheet.write(row, col, alarm_dimensions[dimension])
-                    col += 1
-                alarm_names.append(alarm["AlarmName"])
-            if request_data["delete"]:
-                delete_alarms(cloudwatch_client, service, alarm_names)
-    workbook.close()
+def load_service_config(config_path: str) -> Dict[str, Any]:
+    """Load JSON service configuration file."""
+    try:
+        with open(config_path, 'r') as file:
+            return json.load(file)
+    except Exception as e:
+        logger.error("Error loading service config from %s: %s", config_path, e)
+        raise
 
 
-def get_aws_services_data(session, max_results, request_data):
-    ec2_client = session.client('ec2', region_name=request_data["region_name"])
-    elbv2_client = session.client('elbv2', region_name=request_data['region_name'])
-    rds_client = session.client('rds', region_name=request_data["region_name"])
-    ecs_client = session.client('ecs', region_name=request_data["region_name"])
-    lambda_client = session.client('lambda', region_name=request_data["region_name"])
-    sqs_client = session.client('sqs', region_name=request_data["region_name"])
-    ec2_instance_ids = get_ec2_details(ec2_client, max_results)
-    load_balancers = get_load_balancer_details(elbv2_client, max_results)
-    target_groups, load_balancers_target_group = get_target_group_details(elbv2_client, max_results)
-    rds_clusters = get_rds_cluster_details(rds_client, max_results)
-    rds_instances = get_rds_instance_details(rds_client, max_results)
-    ecs_clusters = get_ecs_cluster_details(ecs_client, max_results)
-    ecs_services = get_ecs_service_details(ecs_client, max_results)
-    lambda_names = get_lambda_details(lambda_client, max_results)
-    lambda_resources = get_lambda_resource_details(lambda_client, max_results)
-    sqs_names = get_sqs_details(sqs_client, max_results)
-    service_data = {
-        "EC2Instance": ec2_instance_ids,
-        "RDSCluster": rds_clusters,
-        "RDSInstance": rds_instances,
-        "TargetGroup": target_groups,
-        "LoadBalancerTargetGroup": load_balancers_target_group,
-        "LoadBalancer": load_balancers,
-        "ECSService": ecs_services,
-        "ECSCluster": ecs_clusters,
-        "Lambda": lambda_names,
-        "LambdaResource": lambda_resources,
-        "SQS": sqs_names
-    }
-    return service_data
+def save_json_output(data: Dict[str, Any], output_path: str) -> None:
+    """Save results to JSON file."""
+    try:
+        with open(output_path, 'w') as file:
+            json.dump(data, indent=4, fp=file)
+        logger.info("Results saved to %s", output_path)
+    except Exception as e:
+        logger.error("Error saving JSON output: %s", e)
 
 
-def main():
-    with open("inputs.yml", 'r') as file:
-        request_data = yaml.safe_load(file)
-
-    with open("input.json", 'r') as file:
-        input_data = json.load(file)
-
-    session = AWSSession.get_aws_session(request_data)
-    max_results = 100
-    service_data = get_aws_services_data(session, max_results, request_data)
-    cloudwatch_client = session.client('cloudwatch', region_name=request_data["region_name"])
-    cloudwatch_alarms = list_alarms_for_aws_resources(cloudwatch_client, max_results)
-
-    output_data = {}
-    for resource_name, resource_details in input_data.items():
-        logger.info(f"\n---- Checking {resource_name} ----")
-        if resource_name in service_data:
-            unused_alarms = []
-            for namespace in resource_details['Namespace']:
-                unused_alarms.extend(check_alarm_aws_resources_with_resource_list(resource_details, namespace, cloudwatch_alarms, service_data[resource_name]))
-            output_data[resource_name] = unused_alarms
-
-    logger.info("\nOutput:")
-    logger.info(json.dumps(output_data, indent=4))
-
-    if output_data:
-        with open("output.json", "w") as outfile:
-            outfile.write(json.dumps(output_data, indent=4))
-
-        create_excel_report(request_data, input_data, output_data, cloudwatch_client)
-
-        if request_data["Email"]["enabled"]:
-            script_subject = "AWS Inventory Report"
-            script_message = "Please find the generated inventory file attached"
-            Notification.send_email(script_subject, script_message, 'Inventory.xlsx')
+def main() -> None:
+    """Main execution function."""
+    try:
+        logger.info("=" * 60)
+        logger.info("CloudWatch Orphan Alarm Detector - Starting")
+        logger.info("=" * 60)
+        
+        # Load configurations
+        config = load_configuration(CONFIG_FILE)
+        service_config = load_service_config(SERVICE_CONFIG_FILE)
+        
+        # Create AWS session
+        session = AWSSession.get_aws_session(config)
+        region = config["region_name"]
+        
+        # Discover resources
+        discovery = ResourceDiscovery(session, region)
+        resources = discovery.discover_all_resources()
+        
+        # Detect orphan alarms
+        detector = OrphanAlarmDetector(discovery.clients['cloudwatch'])
+        all_alarms = detector.get_all_alarms()
+        orphan_alarms = detector.find_orphan_alarms(
+            service_config, all_alarms, resources
+        )
+        
+        # Log summary
+        total_orphans = sum(len(alarms) for alarms in orphan_alarms.values())
+        logger.info("=" * 60)
+        logger.info("Detection Summary:")
+        logger.info("Total orphan alarms found: %d", total_orphans)
+        for service, alarms in orphan_alarms.items():
+            logger.info("  - %s: %d orphan alarms", service, len(alarms))
+        logger.info("=" * 60)
+        
+        if not orphan_alarms:
+            logger.info("No orphan alarms detected. Exiting.")
+            return
+        
+        # Save results
+        save_json_output(orphan_alarms, OUTPUT_FILE)
+        ReportGenerator.create_excel_report(service_config, orphan_alarms)
+        
+        # Delete orphan alarms if enabled
+        if config.get("delete", False):
+            logger.warning("Deletion mode enabled - removing orphan alarms")
+            detector.delete_orphan_alarms(orphan_alarms)
+        else:
+            logger.info("Deletion mode disabled - orphan alarms preserved")
+        
+        # Send email notification if enabled
+        if config.get("Email", {}).get("enabled", False):
+            logger.info("Sending email notification")
+            notifier = EmailNotifier(CONFIG_FILE)
+            notifier.send_email(
+                subject="AWS Orphan Alarms Report",
+                body=f"<p>Orphan alarm detection completed.</p>"
+                     f"<p>Total orphan alarms found: <strong>{total_orphans}</strong></p>"
+                     f"<p>Please review the attached Excel report for details.</p>",
+                attachment_path=REPORT_FILE
+            )
+        
+        logger.info("=" * 60)
+        logger.info("CloudWatch Orphan Alarm Detector - Completed Successfully")
+        logger.info("=" * 60)
+        
+    except Exception as e:
+        logger.error("Fatal error in main execution: %s", e, exc_info=True)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
