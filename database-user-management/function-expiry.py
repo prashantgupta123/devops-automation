@@ -340,14 +340,8 @@ def main():
     output_data = []
 
     # Get AWS session
-    region_name = input_data["awsCredentials"]["region_name"]
-    profile_name = input_data["awsCredentials"]["profile_name"]
-    role_arn = input_data["awsCredentials"]["role_arn"]
-    access_key = input_data["awsCredentials"]["access_key"]
-    secret_key = input_data["awsCredentials"]["secret_access_key"]
-    session_token = input_data["awsCredentials"]["session_token"]
-    session = AWSSession.get_aws_session(region_name, profile_name, role_arn, access_key, secret_key, session_token)
-    dynamodb_client = session.client('dynamodb', region_name=region_name)
+    session = AWSSession.get_aws_session(input_data["awsCredentials"])
+    dynamodb_client = session.client('dynamodb', region_name=input_data["awsCredentials"]["region_name"])
     dynamodb_table_name = input_data["awsCredentials"]["dynamodb_table"]
 
     # Get table items
