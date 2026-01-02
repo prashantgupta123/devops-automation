@@ -4,6 +4,6 @@ common:
   tags:
     "Feature": "app-services"
     "Project": "Example"
-    "Owner": "test@example.com"
+    "Owner": "test@cloudplatform.com"
     "ManagedBy": "DevOps"
-    "CreatedBy": "test@example.com"
+    "CreatedBy": "test@cloudplatform.com"

@@ -12,7 +12,7 @@
 	"notification": {
 		"email": {
 			"subject_prefix": "MyProject",
-			"to": "user@example.com",
+			"to": "user@cloudplatform.com",
 			"cc": [],
 			"bcc": []
 		}

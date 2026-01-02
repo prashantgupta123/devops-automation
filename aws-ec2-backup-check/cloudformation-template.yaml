@@ -15,7 +15,7 @@ Parameters:
   NotificationEmail:
     Type: String
     Description: 'Email address to receive notifications'
-    Default: 'admin@example.com'
+    Default: 'admin@cloudplatform.com'
   
   SubjectPrefix:
     Type: String
@@ -77,9 +77,9 @@ Resources:
         - Key: 'Environment'
           Value: 'prod'
         - Key: 'CreatedBy'
-          Value: 'prashantgupta@example.com'
+          Value: 'prashantgupta@cloudplatform.com'
         - Key: 'Owner'
-          Value: 'prashantgupta@example.com'
+          Value: 'prashantgupta@cloudplatform.com'
 
   
   # Lambda Function
@@ -114,9 +114,9 @@ Resources:
         - Key: 'Environment'
           Value: 'prod'
         - Key: 'CreatedBy'
-          Value: 'prashantgupta@example.com'
+          Value: 'prashantgupta@cloudplatform.com'
         - Key: 'Owner'
-          Value: 'prashantgupta@example.com'
+          Value: 'prashantgupta@cloudplatform.com'
 
   LambdaFunctionConfig:
     Type: AWS::Lambda::EventInvokeConfig
@@ -144,9 +144,9 @@ Resources:
         - Key: 'Environment'
           Value: 'prod'
         - Key: 'CreatedBy'
-          Value: 'prashantgupta@example.com'
+          Value: 'prashantgupta@cloudplatform.com'
         - Key: 'Owner'
-          Value: 'prashantgupta@example.com'
+          Value: 'prashantgupta@cloudplatform.com'
 
   # Permission for EventBridge to invoke Lambda
   LambdaInvokePermission:

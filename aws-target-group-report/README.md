@@ -32,7 +32,7 @@ Update `input.json` with your AWS credentials and email settings:
   "notification": {
     "email": {
       "subject_prefix": "YourCompany",
-      "to": "recipient@example.com",
+      "to": "recipient@cloudplatform.com",
       "cc": [],
       "bcc": []
     }

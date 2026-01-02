@@ -18,6 +18,7 @@ devops-automation/
 ├── aws-iam-identity-accounts-sso/     # AWS SSO credential automation
 ├── aws-news/                          # AWS news aggregation service
 ├── aws-target-group-report/           # Target group health reporting
+├── database-user-management/          # Database user access management automation
 ├── kong-service-routes/               # Kong API Gateway automation
 ├── npm-vulnerability-report/          # NPM security vulnerability scanning
 ├── unauthenticated-apis-report/       # API authentication security scanning
@@ -39,6 +40,22 @@ Comprehensive solution for building, deploying, and managing AI agents using AWS
 - Direct API invocation and Lambda integration support
 - Comprehensive monitoring and observability features
 - Security best practices and compliance considerations
+
+### 🔐 Database User Management
+**Location:** `database-user-management/`
+
+Automated database user access management system that handles MySQL user creation, privilege management, and access control. Provides comprehensive user lifecycle management with email notifications and DynamoDB tracking.
+
+**Key Features:**
+- Automated MySQL user creation and deletion
+- Granular privilege management (READ, READ_WRITE, ADMIN levels)
+- Multi-project and multi-database support
+- DynamoDB integration for user tracking and audit trails
+- Email notifications for access grants, updates, and revocations
+- Flexible AWS authentication methods
+- Comprehensive logging and error handling
+- Command-line interface for easy integration
+- Security validation and email domain restrictions
 
 ### 💾 AWS Backup Failed Monitoring
 **Location:** `aws-backup-failed-monitoring/`

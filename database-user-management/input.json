@@ -1,0 +1,110 @@
+{
+    "awsCredentials": {
+		"account_id": "<aws_account_id>",
+		"region_name": "<aws_region>",
+		"profile_name": "<aws_profile_name>",
+		"role_arn": "<aws_role_arn>",
+		"access_key": "<aws_access_key>",
+		"secret_access_key": "<aws_secret_key>",
+		"session_token": "<aws_session_token>",
+        "dynamodb_table": "<aws_dynamodb_table>",
+        "secret_manager": "ses-smtp-user/NW-Projects"
+	},
+    "smtpCredentials": {
+		"host": "<smtp_host>",
+		"port": "<smtp_port>",
+		"username": "<smtp_username>",
+		"password": "<smtp_password>",
+		"from_email": "<sender_email>"
+	},
+	"emailNotification": {
+		"email_subject": "Database User Management",
+		"subject_prefix": "CloudPlatform",
+		"to": [
+			"<recipient_email>"
+		],
+		"cc": [
+			"<cc_email>"
+		],
+		"bcc": [
+			"<bcc_email>"
+		]
+	},
+    "access_level": {
+        "READ": [
+            "SELECT"
+        ],
+        "READ_WRITE": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE"
+        ],
+        "READ_WRITE_ADMIN": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE",
+            "ALTER",
+            "CREATE",
+            "REFERENCES",
+            "DROP",
+            "INDEX",
+            "CREATE VIEW",
+            "SHOW VIEW",
+            "CREATE ROUTINE",
+            "ALTER ROUTINE",
+            "CREATE TEMPORARY TABLES"
+        ],
+        "ADMIN": [
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "DELETE",
+            "ALTER",
+            "CREATE",
+            "REFERENCES",
+            "DROP",
+            "INDEX",
+            "CREATE VIEW",
+            "SHOW VIEW",
+            "CREATE ROUTINE",
+            "ALTER ROUTINE",
+            "CREATE TEMPORARY TABLES",
+            "GRANT",
+            "REVOKE"
+        ],
+        "SUPER_ADMIN": [
+            "ALL PRIVILEGES"
+        ]
+    },
+    "admin": {
+        "database": {
+            "non-prod_project_mysql": {
+                "database_type": "mysql",
+                "secret_manager": "non-prod/project/mysql",
+                "database_connection": 5
+            },
+            "prod_project_mysql": {
+                "database_type": "mysql",
+                "secret_manager": "prod/project/mysql",
+                "database_connection": 1
+            }
+        }
+    },
+    "projects": {
+        "project": {
+            "data": {
+                "owner_name": "Prashant Gupta",
+                "owner_email": "prashant.gupta@cloudplatform.com"
+            },
+            "tools": {
+                "database": {
+                    "dev_project": "non-prod_project_mysql",
+                    "qa_project": "non-prod_project_mysql",
+                    "prod_project" : "prod_project_mysql"
+                }
+            }
+        }
+    }
+}

@@ -16,6 +16,6 @@ Email:
     password: ""
     from: ""
     to:
-      - "prashant.gupta@example.com"
+      - "prashant.gupta@cloudplatform.com"
     cc:
-      - "test@example.com"
+      - "test@cloudplatform.com"

@@ -88,12 +88,12 @@ Parameters:
   CreatedBy:
     Type: String
     Description: The email of the creator for tagging resources.
-    Default: prashant.gupta@example.com
+    Default: prashant.gupta@cloudplatform.com
 
   Owner:
     Type: String
     Description: The email of the owner for tagging resources.
-    Default: prashant.gupta@example.com
+    Default: prashant.gupta@cloudplatform.com
 
 Resources:
 

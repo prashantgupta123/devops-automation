@@ -12,6 +12,6 @@ Email:
   details:
     subject_prefix: "Example"
     to:
-      - "test@example.com"
+      - "test@cloudplatform.com"
     cc: []
     bcc: []

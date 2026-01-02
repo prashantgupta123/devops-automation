@@ -65,9 +65,9 @@ Email:
   details:
     subject_prefix: "AWS Backup Alert"
     to:
-      - "admin@example.com"
+      - "admin@cloudplatform.com"
     cc:
-      - "devops@example.com"
+      - "devops@cloudplatform.com"
 ```
 
 ### AWS Secrets Manager
@@ -78,7 +78,7 @@ Create a secret in AWS Secrets Manager with the following structure:
   "SMTP_PORT": "587",
   "SMTP_USERNAME": "your-username",
   "SMTP_PASSWORD": "your-password",
-  "EMAIL_FROM": "alerts@example.com"
+  "EMAIL_FROM": "alerts@cloudplatform.com"
 }
 ```
 

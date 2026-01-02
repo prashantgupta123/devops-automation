@@ -58,9 +58,9 @@ Resources:
         - Key: 'Environment'
           Value: 'prod'
         - Key: 'CreatedBy'
-          Value: 'prashantgupta@example.com'
+          Value: 'prashantgupta@cloudplatform.com'
         - Key: 'Owner'
-          Value: 'prashantgupta@example.com'
+          Value: 'prashantgupta@cloudplatform.com'
 
   GuardDutyLambdaFunction:
     Type: AWS::Lambda::Function
@@ -95,9 +95,9 @@ Resources:
         - Key: 'Environment'
           Value: 'prod'
         - Key: 'CreatedBy'
-          Value: 'prashantgupta@example.com'
+          Value: 'prashantgupta@cloudplatform.com'
         - Key: 'Owner'
-          Value: 'prashantgupta@example.com'
+          Value: 'prashantgupta@cloudplatform.com'
 
   GuardDutyEventRule:
     Type: AWS::Events::Rule
@@ -121,9 +121,9 @@ Resources:
         - Key: 'Environment'
           Value: 'prod'
         - Key: 'CreatedBy'
-          Value: 'prashantgupta@example.com'
+          Value: 'prashantgupta@cloudplatform.com'
         - Key: 'Owner'
-          Value: 'prashantgupta@example.com'
+          Value: 'prashantgupta@cloudplatform.com'
 
   GuardDutyLambdaFunctionRetryPolicy:
     Type: AWS::Lambda::EventInvokeConfig
