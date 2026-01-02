@@ -377,7 +377,7 @@ def main():
                 delete_data_in_dynamodb(dynamodb_client, dynamodb_table_name, item["newer_email"], item["database_name"])
                 output_data.append(item)
                 email_body = get_email_body(newer_response, "revoked")
-                Notification.send_email(session, input_data["awsCredentials"]["secret_manager"], input_data["notification"]["email"], newer_response["project"].capitalize() + " | " + item["newer_name"] + " | Revoked Database Access", email_body, newer_response["email"])
+                Notification.send_email(input_data["smtpCredentials"], input_data["emailNotification"], email_body)
                 logger.info("Email sent! Old user deleted successfully!")
 
     logger.info("Output Data:")

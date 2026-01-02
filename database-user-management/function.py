@@ -587,7 +587,7 @@ def main():
             delete_data_in_dynamodb(dynamodb_client, input_data["awsCredentials"]["dynamodb_table"])
             email_body = get_email_body(newer_response, "revoked")
             # input_data["notification"]["email"]["cc"].append(newer_response["owner_email"])
-            Notification.send_email(session, input_data["awsCredentials"]["secret_manager"], input_data["notification"]["email"], newer_response["project"].capitalize() + " | " + newer_name + " | Revoked Database Access", email_body, newer_response["email"])
+            Notification.send_email(input_data["smtpCredentials"], input_data["emailNotification"], email_body)
             logger.info("Email sent! Old user deleted successfully!")
         if newer_action == "UPDATE":
             newer_response = add_newer_data(session, input_data)
@@ -595,7 +595,7 @@ def main():
             update_privileges_data_in_dynamodb(dynamodb_client, input_data["awsCredentials"]["dynamodb_table"], newer_response)
             email_body = get_email_body(newer_response, "updated")
             # input_data["notification"]["email"]["cc"].append(newer_response["owner_email"])
-            Notification.send_email(session, input_data["awsCredentials"]["secret_manager"], input_data["notification"]["email"], newer_response["project"].capitalize() + " | " + newer_name + " | Updated Database Access", email_body, newer_response["email"])
+            Notification.send_email(input_data["smtpCredentials"], input_data["emailNotification"], email_body)
             logger.info("Email sent! User updated successfully!")
     else:
         logger.info("Newer Data does not exist in DynamoDB!")
@@ -605,7 +605,7 @@ def main():
             put_data_in_dynamodb(dynamodb_client, input_data["awsCredentials"]["dynamodb_table"], newer_response)
             email_body = get_email_body(newer_response, "granted")
             # input_data["notification"]["email"]["cc"].append(newer_response["owner_email"])
-            Notification.send_email(session, input_data["awsCredentials"]["secret_manager"], input_data["notification"]["email"], newer_response["project"].capitalize() + " | " + newer_name + " | Granted Database Access", email_body, newer_response["email"])
+            Notification.send_email(input_data["smtpCredentials"], input_data["emailNotification"], email_body)
             logger.info("Email sent! New user created successfully!")
 
 
