@@ -1,0 +1,9 @@
+common:
+  project_name_prefix: "project"
+  project: "MyProject"
+  tags:
+    "Feature": "app-services"
+    "Project": "MyProject"
+    "Owner": "prashantgupta@cloudplatform.com"
+    "CreatedBy": "prashantgupta@cloudplatform.com"
+    "ManagedBy": "DevOps"

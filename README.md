@@ -18,6 +18,7 @@ devops-automation/
 ├── aws-guardduty-notification/        # GuardDuty multi-channel alert system
 ├── aws-iam-identity-accounts-sso/     # AWS SSO credential automation
 ├── aws-news/                          # AWS news aggregation service
+├── aws-start-stop-services/           # EC2 instance automated scheduling
 ├── aws-target-group-report/           # Target group health reporting
 ├── database-user-management/          # Database user access management automation
 ├── kong-service-routes/               # Kong API Gateway automation
@@ -219,6 +220,23 @@ Comprehensive serverless solution for processing AWS GuardDuty security findings
 - Automated deployment scripts
 - Severity-based alert formatting
 - Comprehensive security best practices
+
+### ⏰ AWS EC2 Start/Stop Services
+**Location:** `aws-start-stop-services/`
+
+Automated EC2 instance scheduling solution that starts and stops instances based on EventBridge cron schedules. Designed for cost optimization in non-production environments by running instances only during business hours.
+
+**Key Features:**
+- Automated start/stop scheduling with EventBridge cron expressions
+- Multi-instance and multi-module support (backend, frontend, databases)
+- SNS notifications for success and failure scenarios
+- VPC-enabled Lambda with security group controls
+- Terraform infrastructure as code with workspace support
+- CloudWatch logging and error alarms
+- Production-ready Python code with type hints and error handling
+- Cost savings up to 64% for non-production workloads
+- Idempotent operations safe for retries
+- Comprehensive observability and audit trail
 
 ### 🌐 Kong Service Routes Automation
 **Location:** `kong-service-routes/`

@@ -1,0 +1,171 @@
+workspace:
+  name: "prod"
+
+  aws:
+    account_id: "123456789012"
+    account_name: "test-prod"
+    region: "ap-south-1"
+    role: ""
+    profile: ""
+    vpc:
+      id: "vpc-111115555599999ff"
+      name: "test-prod-vpc"
+      subnet:
+        "private":
+          - "test-prod-private-az1-sbt"
+          - "test-prod-private-az2-sbt"
+      subnet_ids:
+        "private":
+          - "subnet-1122334455667788f"
+          - "subnet-9988776655443322f"
+  common:
+    environment: "prod"
+    region: "ap-south-1"
+    tags:
+      "Module": "LAMBDA"
+
+  lambda:
+    name: "start-stop-lambda"
+    description: "Lambda function to start and stop EC2 instances in DR environment"
+    runtime: "python3.14"
+    handler: "lambda_function.lambda_handler"
+    timeout: 300
+    memory_size: 512
+    action: "lambda:InvokeFunction"
+    principal: "events.amazonaws.com"
+    environment_variables:
+      ENVIRONMENT: "prod"
+    log_retention_in_days: 30
+    event_invoke_config:
+      maximum_retry_attempts: 0
+      maximum_event_age_in_seconds: 3600
+
+  event:
+    start-backendserver:
+      description: "Start Backend Server every weekday at 06:00 AM UTC"
+      schedule_expression: "cron(0 6 ? * MON-FRI *)"  # Every weekday at 06:00 AM UTC
+      event_input:
+        action: "start"
+        module: "backendserver"
+        instance_details:
+          "i-11223344556677889": "test-prod-backendserver"
+    stop-backendserver:
+      description: "Stop Backend Server every weekday at 06:00 PM UTC"
+      schedule_expression: "cron(0 18 ? * MON-FRI *)"  # Every weekday at 06:00 PM UTC
+      event_input:
+        action: "stop"
+        module: "backendserver"
+        instance_details:
+          "i-11223344556677889": "test-prod-backendserver"
+    start-frontendserver:
+      description: "Start Frontend Server every weekday at 06:00 AM UTC"
+      schedule_expression: "cron(0 6 ? * MON-FRI *)"  # Every weekday at 06:00 AM UTC
+      event_input:
+        action: "start"
+        module: "frontendserver"
+        instance_details:
+          "i-99887766554433221": "test-prod-frontendserver"
+    stop-frontendserver:
+      description: "Stop Frontend Server every weekday at 06:00 PM UTC"
+      schedule_expression: "cron(0 18 ? * MON-FRI *)"  # Every weekday at 06:00 PM UTC
+      event_input:
+        action: "stop"
+        module: "frontendserver"
+        instance_details:
+          "i-99887766554433221": "test-prod-frontendserver"
+  
+  sns:
+    subject_prefix: "MyProject | [LAMBDA Notification]"
+    display_name: "MyProject Lambda Notifications"
+    
+  role:
+    assume_role_policy: |
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": {
+              "Service": "lambda.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+          }
+        ]
+      }
+    policy: |
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": [
+              "logs:CreateLogGroup",
+              "logs:CreateLogStream",
+              "logs:PutLogEvents"
+            ],
+            "Resource": "arn:aws:logs:*:*:*"
+          },
+          {
+            "Effect": "Allow",
+            "Action": [
+              "ec2:StartInstances",
+              "ec2:StopInstances",
+              "ec2:DescribeInstances"
+            ],
+            "Resource": "*"
+          },
+          {
+            "Effect": "Allow",
+            "Action": [
+              "sns:Publish"
+            ],
+            "Resource": "*"
+          },
+          {
+            "Effect": "Allow",
+            "Action": [
+              "ec2:CreateNetworkInterface",
+              "ec2:DescribeNetworkInterfaces",
+              "ec2:DeleteNetworkInterface",
+              "ec2:AssignPrivateIpAddresses",
+              "ec2:UnassignPrivateIpAddresses"
+            ],
+            "Resource": "*"
+          }
+        ]
+      }
+    
+  cloudwatch:
+    error_count:
+      namespace: "AWS/Lambda"
+      metric_name: "Errors"
+      statistic: "Sum"
+      comparison_operator: "GreaterThanThreshold"
+      evaluation_periods: 1
+      datapoints_to_alarm: 1
+      period: 60
+      threshold: 0
+      alarm_description: "Alarm when the Lambda function encounters errors"
+      alarm_actions: []
+      ok_actions: []
+      function_name:
+        - "start-stop-lambda"
+
+  security_group:
+    inbound: []
+    outbound:
+      - from_port: 443
+        to_port: 443
+        protocol: "tcp"
+        cidr_blocks: [ "0.0.0.0/0" ]
+        description: "Allow download packages temporarily"
+      - from_port: 443
+        to_port: 443
+        protocol: "tcp"
+        security_groups: [ "sg-112233445566778899" ]
+        description: "Allow HTTPS traffic to SSM endpoint"
+      - from_port: 443
+        to_port: 443
+        protocol: "tcp"
+        prefix_list_ids: [ "pl-11223344" ]
+        description: "Allow HTTPS traffic to S3"
