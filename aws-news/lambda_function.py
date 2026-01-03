@@ -8,32 +8,36 @@ from datetime import datetime, timedelta
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-FEED_URL = "https://aws.amazon.com/about-aws/whats-new/recent/feed/"
+NEWS_FEED_URL = "https://aws.amazon.com/about-aws/whats-new/recent/feed/"
+BLOG_FEED_URL = "https://aws.amazon.com/blogs/aws/feed/"
 WEBHOOK_URL = os.environ.get('WEBHOOK_URL', "https://chat.googleapis.com/v1/spaces/")
+
+def fetch_daily_entries(feed_url):
+    feed = feedparser.parse(feed_url)
+    cutoff_time = datetime.now() - timedelta(days=1)
+    return [e for e in feed.entries if datetime(*e.published_parsed[:6]) >= cutoff_time]
 
 def lambda_handler(event, context):
     ssl._create_default_https_context = ssl._create_unverified_context
+    
+    # Fetch news updates
     logger.info("Fetching AWS news feed")
-    feed = feedparser.parse(FEED_URL)
-    logger.info(f"Found {len(feed.entries)} entries")
+    news_entries = fetch_daily_entries(NEWS_FEED_URL)
+    logger.info(f"Found {len(news_entries)} news entries from last 24 hours")
     
-    # Filter entries from last 24 hours
-    cutoff_time = datetime.now() - timedelta(days=1)
-    daily_entries = []
-    for entry in feed.entries:
-        published = datetime(*entry.published_parsed[:6])
-        if published >= cutoff_time:
-            daily_entries.append(entry)
+    if news_entries:
+        updates = "\n\n".join([f"• {e.title}\n{e.link}" for e in news_entries])
+        message = {"text": f"AWS Daily Updates ({len(news_entries)} new):\n\n{updates}"}
+        requests.post(WEBHOOK_URL, json=message)
     
-    logger.info(f"Found {len(daily_entries)} entries from last 24 hours")
+    # Fetch blog updates
+    logger.info("Fetching AWS blog feed")
+    blog_entries = fetch_daily_entries(BLOG_FEED_URL)
+    logger.info(f"Found {len(blog_entries)} blog entries from last 24 hours")
     
-    if daily_entries:
-        updates = "\n\n".join([f"• {e.title}\n{e.link}" for e in daily_entries])
-        message = {"text": f"AWS Daily Updates ({len(daily_entries)} new):\n\n{updates}"}
-        logger.info(f"Posting {len(daily_entries)} updates")
-        response = requests.post(WEBHOOK_URL, json=message)
-        logger.info(f"Webhook response: {response.status_code}")
-        return {'statusCode': 200, 'body': f'Posted {len(daily_entries)} updates'}
-    else:
-        logger.info("No new updates in the last 24 hours")
-        return {'statusCode': 200, 'body': 'No new updates'}
+    if blog_entries:
+        updates = "\n\n".join([f"• {e.title}\n{e.link}" for e in blog_entries])
+        message = {"text": f"AWS Daily Blog Updates ({len(blog_entries)} new):\n\n{updates}"}
+        requests.post(WEBHOOK_URL, json=message)
+    
+    return {'statusCode': 200, 'body': f'Posted {len(news_entries)} news + {len(blog_entries)} blog updates'}

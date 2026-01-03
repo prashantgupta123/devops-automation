@@ -1,14 +1,15 @@
 # AWS News Feed to Google Chat Notifier
 
-A serverless AWS Lambda function that automatically fetches AWS news updates and sends daily notifications to Google Chat spaces.
+A serverless AWS Lambda function that automatically fetches AWS news updates and blog posts, sending daily notifications to Google Chat spaces.
 
 ## Overview
 
-This solution monitors the AWS "What's New" RSS feed and sends a daily digest of new announcements to a Google Chat space. It filters updates from the last 24 hours and formats them for easy reading in chat.
+This solution monitors both the AWS "What's New" RSS feed and AWS Blog feed, sending daily digests of new announcements to a Google Chat space. It filters updates from the last 24 hours and formats them for easy reading in chat.
 
 ## Features
 
-- **Automated Daily Updates**: Fetches AWS news from the official RSS feed
+- **Dual Feed Monitoring**: Fetches both AWS news and blog posts from official RSS feeds
+- **Automated Daily Updates**: Sends separate notifications for news and blog updates
 - **Smart Filtering**: Only sends updates from the last 24 hours
 - **Google Chat Integration**: Posts formatted messages to Google Chat spaces
 - **Serverless Architecture**: Runs on AWS Lambda with minimal infrastructure
@@ -20,7 +21,8 @@ This solution monitors the AWS "What's New" RSS feed and sends a daily digest of
 ```
 CloudWatch Events (Daily Trigger) → AWS Lambda → Google Chat Webhook
                                         ↓
-                                   AWS RSS Feed
+                                   AWS News Feed
+                                   AWS Blog Feed
 ```
 
 ## Google Chat Space webhook
@@ -123,7 +125,12 @@ The function runs automatically based on the configured EventBridge rule. Defaul
 
 ## Message Format
 
-The Google Chat message includes:
+The function sends two separate Google Chat messages:
+
+1. **AWS Daily Updates** - News announcements from What's New feed
+2. **AWS Daily Blog Updates** - Blog posts from AWS Blog feed
+
+Each message includes:
 - Number of new updates
 - Bulleted list of update titles
 - Direct links to each announcement
@@ -137,6 +144,16 @@ https://aws.amazon.com/about-aws/whats-new/...
 
 • AWS Lambda adds support for Python 3.13
 https://aws.amazon.com/about-aws/whats-new/...
+```
+
+```
+AWS Daily Blog Updates (2 new):
+
+• Introducing new features for Amazon S3
+https://aws.amazon.com/blogs/aws/...
+
+• Best practices for AWS security
+https://aws.amazon.com/blogs/aws/...
 ```
 
 ## Monitoring & Troubleshooting
@@ -158,8 +175,8 @@ Monitor function execution in CloudWatch Logs:
    - Check network connectivity
 
 3. **Rate limiting**
-   - AWS RSS feed has built-in rate limiting
-   - Function includes appropriate delays
+   - AWS RSS feeds have built-in rate limiting
+   - Function processes feeds sequentially
 
 ## Cost Estimation
 
@@ -196,6 +213,7 @@ python lambda_function.py
 - **Content Filtering**: Add keyword filters in lambda_function.py
 - **Message Format**: Customize message template
 - **Multiple Channels**: Add support for multiple webhook URLs
+- **Additional Feeds**: Add more RSS feeds by extending the fetch_daily_entries function
 
 ## Contributing
 
