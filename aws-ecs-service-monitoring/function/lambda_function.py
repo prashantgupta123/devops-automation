@@ -1,125 +1,307 @@
-import boto3
-import os
-import logging
+"""
+AWS ECS Service Monitoring Lambda Function
 
+This Lambda function monitors AWS ECS service events and sends notifications
+when critical issues occur. It processes CloudWatch Events for ECS services
+and publishes alerts via SNS while creating custom CloudWatch metrics.
+
+Author: Prashant Gupta
+"""
+
+import json
+import logging
+import os
+from typing import Any, Dict, Optional, Tuple
+
+import boto3
+from botocore.exceptions import ClientError
+
+# Configure logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# Validate required environment variables
-required_env_vars = ['REGION', 'ALERT_TOPIC_ARN', 'PROJECT_NAME', 'ENV']
-for var in required_env_vars:
-    if not os.environ.get(var):
-        raise ValueError(f"Required environment variable {var} is not set")
+# Environment configuration
+REQUIRED_ENV_VARS = ['REGION', 'ALERT_TOPIC_ARN', 'PROJECT_NAME', 'ENV']
+REGION = os.environ.get('REGION')
+ALERT_TOPIC_ARN = os.environ.get('ALERT_TOPIC_ARN')
+PROJECT_NAME = os.environ.get('PROJECT_NAME')
+ENV = os.environ.get('ENV')
 
-regionName = os.environ.get('REGION')
+# Constants
+CUSTOM_METRIC_NAME = 'ECSServiceErrorEventsCount'
+CLOUDWATCH_NAMESPACE = 'AWS/ECS'
 
-def putMetricData(clusterName, serviceName, customMetricName, countValue):
-    cloudWatchClient = boto3.client('cloudwatch', region_name=regionName)
-    response = cloudWatchClient.put_metric_data(
-        Namespace='AWS/ECS',
-        MetricData=[
-            {
-                'MetricName': customMetricName,
-                'Dimensions': [
-                    {
-                        'Name': 'ClusterName',
-                        'Value': clusterName
-                    },
-                    {
-                        'Name': 'ServiceName',
-                        'Value': serviceName
-                    },
-                ],
-                'Values': [countValue],
-                'Unit': 'Count'
-            }
-        ]
+# Event type mappings
+EVENT_MAPPINGS = {
+    'SERVICE_TASK_PLACEMENT_FAILURE': (
+        'ECS Service Task Placement Failure',
+        'Not enough CPU or memory capacity on the available container instances or no container instances being available'
+    ),
+    'SERVICE_TASK_CONFIGURATION_FAILURE': (
+        'ECS Service Task Configuration Failure',
+        'Tags were being applied to the service but the user or role had not opted in to the new Amazon Resource Name (ARN) format in the Region'
+    ),
+    'SERVICE_DAEMON_PLACEMENT_CONSTRAINT_VIOLATED': (
+        'ECS Service Daemon Placement Constraint Violated',
+        'A task in a service using the DAEMON service scheduler strategy no longer meets the placement constraint strategy for the service'
+    ),
+    'ECS_OPERATION_THROTTLED': (
+        'ECS Operation Throttled',
+        'The service scheduler has been throttled due to the Amazon ECS API throttle limits'
+    ),
+    'SERVICE_DISCOVERY_OPERATION_THROTTLED': (
+        'ECS Service Discovery Operation Throttled',
+        'The service scheduler has been throttled due to the AWS Cloud Map API throttle limits. This can occur on services configured to use service discovery'
+    ),
+    'SERVICE_DEPLOYMENT_FAILED': (
+        'ECS Service Deployment Failed',
+        'A service deployment did not reach steady state. This happens when a CloudWatch alarm is triggered or the circuit breaker detects a service deployment failure'
+    ),
+    'SERVICE_TASK_START_IMPAIRED': (
+        'ECS Service Task Start Impaired',
+        'The service is unable to consistently start tasks successfully'
+    ),
+    'SERVICE_DISCOVERY_INSTANCE_UNHEALTHY': (
+        'ECS Service Discovery Instance Unhealthy',
+        'A service using service discovery contains an unhealthy task. The service scheduler detects that a task within a service registry is unhealthy'
+    ),
+    'VPC_LATTICE_TARGET_UNHEALTHY': (
+        'ECS Service VPC Lattice Target Unhealthy',
+        'The service using VPC Lattice has detected one of the targets for the VPC Lattice is unhealthy'
     )
+}
 
 
-def sendSnsNotification(snsArn, snsSubject, snsMessage):
-    snsClient = boto3.client('sns', region_name=regionName)
-    logger.info("SNS ARN: " + snsArn)
-    logger.info("SNS subject: " + snsSubject)
-    logger.info("SNS message: " + snsMessage)
-    response = snsClient.publish(
-        TopicArn=snsArn,
-        Subject=snsSubject,
-        Message=snsMessage,
-    )
+def validate_environment() -> None:
+    """Validate that all required environment variables are set."""
+    missing_vars = [var for var in REQUIRED_ENV_VARS if not os.environ.get(var)]
+    if missing_vars:
+        raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
 
 
-def lambda_handler(event, context):
-    sendNotification = False
-    customMetricName="ECSServiceErrorEventsCount"
-    snsArn = os.environ.get('ALERT_TOPIC_ARN')
+def publish_cloudwatch_metric(
+    cluster_name: str,
+    service_name: str,
+    metric_name: str,
+    count_value: float
+) -> None:
+    """
+    Publish custom metric data to CloudWatch.
+
+    Args:
+        cluster_name: Name of the ECS cluster
+        service_name: Name of the ECS service
+        metric_name: Name of the custom metric
+        count_value: Metric value to publish
+    """
     try:
-        if event["source"] == "aws.ecs":
-            region = event["region"]
-            serviceName = event["resources"][0].split("/", 2)[2]
-            clusterName = event["resources"][0].split("/", 2)[1]
-            reason = ""
-            if "reason" in event["detail"]:
-                reason = event["detail"]["reason"]
-            eventName = event["detail"]["eventName"]
-            eventType = event["detail"]["eventType"]
-            snsSubject = ""
-            messageBody = ""
-            if event["detail-type"] == "ECS Service Action":
-                if eventName == "SERVICE_TASK_PLACEMENT_FAILURE":
-                    snsSubject = "ECS Service Task Placement Failure"
-                    messageBody = "Not enough CPU or memory capacity on the available container instances or no container instances being available"
-                    sendNotification = True
-                elif eventName == "SERVICE_TASK_CONFIGURATION_FAILURE":
-                    snsSubject = "ECS Service Task Configuration Failure"
-                    messageBody = "Tags were being applied to the service but the user or role had not opted in to the new Amazon Resource Name (ARN) format in the Region"
-                    sendNotification = True
-                elif eventName == "SERVICE_DAEMON_PLACEMENT_CONSTRAINT_VIOLATED":  
-                    snsSubject = "ECS Service Daemon Placement Constraint Violated"
-                    messageBody = "A task in a service using the DAEMON service scheduler strategy no longer meets the placement constraint strategy for the service."
-                    sendNotification = True
-                elif eventName == "ECS_OPERATION_THROTTLED":
-                    snsSubject = "ECS Operation Throttled"
-                    messageBody = "The service scheduler has been throttled due to the Amazon ECS API throttle limits."
-                    sendNotification = True
-                elif eventName == "SERVICE_DISCOVERY_OPERATION_THROTTLED":
-                    snsSubject = "ECS Service Discovery Operation Throttled"
-                    messageBody = "The service scheduler has been throttled due to the AWS Cloud Map API throttle limits. This can occur on services configured to use service discovery."
-                    sendNotification = True
-                elif eventName == "SERVICE_DEPLOYMENT_FAILED":
-                    snsSubject = "ECS Service Deployment Failed"
-                    messageBody = "A service deployment did not reach the steady. This happens when a CloudWatch is triggered or the circuit breaker detects a service deployment failure."
-                    sendNotification = True
-                elif eventName == "SERVICE_TASK_START_IMPAIRED":
-                    snsSubject = "ECS Service Task Start Impaired"
-                    messageBody = "The service is unable to consistently start tasks successfully."
-                    sendNotification = True
-                elif eventName == "SERVICE_DISCOVERY_INSTANCE_UNHEALTHY":
-                    snsSubject = "ECS Service Discovery Instance Unhealthy"
-                    messageBody = "A service using service discovery contains an unhealthy task. The service scheduler detects that a task within a service registry is unhealthy."
-                    sendNotification = True
-                elif eventName == "VPC_LATTICE_TARGET_UNHEALTHY":
-                    snsSubject = "ECS Service VPC Lattice Target Unhealthy"
-                    messageBody = "The service using VPC Lattice has detected one of the targets for the VPC Lattice is unhealthy."
-                    sendNotification = True
-            elif event["detail-type"] == "ECS Deployment State Change":
-                if eventName == "SERVICE_DEPLOYMENT_FAILED":
-                    snsSubject = "ECS Service Deployment Failed"
-                    messageBody = "The service deployment has failed. This event is sent for services with deployment circuit breaker logic turned on."
-                    sendNotification = True
+        cloudwatch_client = boto3.client('cloudwatch', region_name=REGION)
+        cloudwatch_client.put_metric_data(
+            Namespace=CLOUDWATCH_NAMESPACE,
+            MetricData=[
+                {
+                    'MetricName': metric_name,
+                    'Dimensions': [
+                        {'Name': 'ClusterName', 'Value': cluster_name},
+                        {'Name': 'ServiceName', 'Value': service_name}
+                    ],
+                    'Value': count_value,
+                    'Unit': 'Count'
+                }
+            ]
+        )
+        logger.info(f"Published metric {metric_name} for {cluster_name}/{service_name}")
+    except ClientError as e:
+        logger.error(f"Failed to publish CloudWatch metric: {e}")
+        raise
 
-            if sendNotification:
-                snsSubject = os.environ['PROJECT_NAME'] + " | " + os.environ['ENV'] + " | " + "ERROR: " + snsSubject
-                snsMessage = "Hi,\n\nCluster Name: " + clusterName + "\nService Name: " + serviceName + "\nRegion: " + region + "\nEvent Name: " + eventName + "\nReason: " + reason + "\nMessage: " + messageBody
-                sendSnsNotification(snsArn, snsSubject, snsMessage)
-                putMetricData(clusterName, serviceName, customMetricName, 1)
-            elif eventType == "ERROR":
-                snsSubject = os.environ['PROJECT_NAME'] + " | " + os.environ['ENV'] + " | " + "ERROR: " + "ECS Error Service Events"
-                snsMessage = "Hi,\n\nNo Event found for: " + str(event)
-                sendSnsNotification(snsArn, snsSubject, snsMessage)
-        else:
-            logger.info("Error: Function only supports input from events with a source type of: aws.ecs")
+
+def send_sns_notification(subject: str, message: str) -> None:
+    """
+    Send notification via SNS topic.
+
+    Args:
+        subject: Email subject line
+        message: Email message body
+    """
+    try:
+        sns_client = boto3.client('sns', region_name=REGION)
+        logger.info(f"Sending SNS notification - Subject: {subject}")
+        logger.debug(f"SNS Message: {message}")
+        
+        sns_client.publish(
+            TopicArn=ALERT_TOPIC_ARN,
+            Subject=subject[:100],  # SNS subject limit is 100 characters
+            Message=message
+        )
+        logger.info("SNS notification sent successfully")
+    except ClientError as e:
+        logger.error(f"Failed to send SNS notification: {e}")
+        raise
+
+
+def parse_ecs_event(event: Dict[str, Any]) -> Tuple[str, str, str, str, str, str]:
+    """
+    Parse ECS CloudWatch event and extract relevant information.
+
+    Args:
+        event: CloudWatch event dictionary
+
+    Returns:
+        Tuple containing (region, cluster_name, service_name, event_name, event_type, reason)
+    """
+    region = event.get('region', 'unknown')
+    
+    # Extract cluster and service names from resource ARN
+    resource_arn = event.get('resources', [''])[0]
+    arn_parts = resource_arn.split('/', 2)
+    cluster_name = arn_parts[1] if len(arn_parts) > 1 else 'unknown'
+    service_name = arn_parts[2] if len(arn_parts) > 2 else 'unknown'
+    
+    detail = event.get('detail', {})
+    event_name = detail.get('eventName', 'UNKNOWN_EVENT')
+    event_type = detail.get('eventType', 'UNKNOWN')
+    reason = detail.get('reason', '')
+    
+    return region, cluster_name, service_name, event_name, event_type, reason
+
+
+def get_event_details(event_name: str) -> Optional[Tuple[str, str]]:
+    """
+    Get subject and message body for a given event name.
+
+    Args:
+        event_name: Name of the ECS event
+
+    Returns:
+        Tuple of (subject, message_body) or None if event not mapped
+    """
+    return EVENT_MAPPINGS.get(event_name)
+
+
+def format_notification(
+    cluster_name: str,
+    service_name: str,
+    region: str,
+    event_name: str,
+    reason: str,
+    subject: str,
+    message_body: str
+) -> Tuple[str, str]:
+    """
+    Format SNS notification subject and message.
+
+    Args:
+        cluster_name: ECS cluster name
+        service_name: ECS service name
+        region: AWS region
+        event_name: Event name
+        reason: Event reason (if available)
+        subject: Base subject line
+        message_body: Base message body
+
+    Returns:
+        Tuple of (formatted_subject, formatted_message)
+    """
+    formatted_subject = f"{PROJECT_NAME} | {ENV} | ERROR: {subject}"
+    formatted_message = (
+        f"Hi,\n\n"
+        f"Cluster Name: {cluster_name}\n"
+        f"Service Name: {service_name}\n"
+        f"Region: {region}\n"
+        f"Event Name: {event_name}\n"
+        f"Reason: {reason}\n"
+        f"Message: {message_body}"
+    )
+    return formatted_subject, formatted_message
+
+
+def process_ecs_event(event: Dict[str, Any]) -> None:
+    """
+    Process ECS CloudWatch event and send notifications if needed.
+
+    Args:
+        event: CloudWatch event dictionary
+    """
+    # Parse event details
+    region, cluster_name, service_name, event_name, event_type, reason = parse_ecs_event(event)
+    
+    logger.info(
+        f"Processing event: {event_name} for {cluster_name}/{service_name} "
+        f"(type: {event_type})"
+    )
+    
+    # Check if this is a monitored event
+    event_details = get_event_details(event_name)
+    
+    if event_details:
+        subject, message_body = event_details
+        formatted_subject, formatted_message = format_notification(
+            cluster_name, service_name, region, event_name, reason, subject, message_body
+        )
+        
+        # Send notification and publish metric
+        send_sns_notification(formatted_subject, formatted_message)
+        publish_cloudwatch_metric(cluster_name, service_name, CUSTOM_METRIC_NAME, 1.0)
+        
+    elif event_type == 'ERROR':
+        # Handle unmapped error events
+        logger.warning(f"Unmapped ERROR event type: {event_name}")
+        subject = f"{PROJECT_NAME} | {ENV} | ERROR: ECS Error Service Events"
+        message = f"Hi,\n\nUnmapped error event detected:\n{json.dumps(event, indent=2)}"
+        send_sns_notification(subject, message)
+
+
+def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+    """
+    Lambda function handler for ECS service monitoring.
+
+    Args:
+        event: CloudWatch event data
+        context: Lambda context object
+
+    Returns:
+        Response dictionary with status code and message
+    """
+    try:
+        # Validate environment on cold start
+        validate_environment()
+        
+        logger.info(f"Received event: {json.dumps(event)}")
+        
+        # Validate event source
+        if event.get('source') != 'aws.ecs':
+            logger.warning(f"Unsupported event source: {event.get('source')}")
+            return {
+                'statusCode': 400,
+                'body': json.dumps('Function only supports events from aws.ecs source')
+            }
+        
+        # Process the ECS event
+        process_ecs_event(event)
+        
+        return {
+            'statusCode': 200,
+            'body': json.dumps('Event processed successfully')
+        }
+        
     except Exception as e:
-        snsSubject = os.environ['PROJECT_NAME'] + " | " + os.environ['ENV'] + " | " + "ERROR: " + "ECS Service Events"
-        snsMessage = "Hi,\n\nEvent: " + str(event) + "Exception occur: " + str(e)
-        sendSnsNotification(snsArn, snsSubject, snsMessage)
+        logger.error(f"Error processing event: {str(e)}", exc_info=True)
+        
+        # Send error notification
+        try:
+            subject = f"{PROJECT_NAME} | {ENV} | ERROR: ECS Service Events Processing Failed"
+            message = (
+                f"Hi,\n\n"
+                f"An error occurred while processing ECS event:\n\n"
+                f"Error: {str(e)}\n\n"
+                f"Event: {json.dumps(event, indent=2)}"
+            )
+            send_sns_notification(subject, message)
+        except Exception as notification_error:
+            logger.error(f"Failed to send error notification: {notification_error}")
+        
+        return {
+            'statusCode': 500,
+            'body': json.dumps(f'Error processing event: {str(e)}')
+        }
