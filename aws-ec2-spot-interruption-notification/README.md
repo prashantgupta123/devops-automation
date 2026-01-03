@@ -866,6 +866,20 @@ Consider implementing the suggested enhancements based on your organization's ne
 
 The complete source code, CloudFormation templates, and deployment scripts are available in the repository. This solution has been tested in production environments and can be adapted to meet specific organizational requirements.
 
+## Contact & Support
+
+**Author**: Prashant Gupta  
+**GitHub**: https://github.com/prashantgupta123/  
+**LinkedIn**: https://www.linkedin.com/in/prashantgupta123/
+
+**Questions or feedback?** Open an issue or submit a pull request!
+
+---
+
+*This solution is part of the [DevOps Automation Solutions](https://github.com/prashantgupta123/devops-automation) repository—a comprehensive collection of production-ready automation tools for cloud infrastructure management.*
+
+**⭐ If you found this helpful, please star the repository!**
+
 ---
 
 *This solution demonstrates how modern cloud-native architectures can solve real operational challenges while maintaining security, performance, and cost-effectiveness. The modular design allows for easy customization and extension as requirements evolve.*
