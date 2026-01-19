@@ -1,0 +1,133 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DenyIAMPolicy",
+            "Effect": "Deny",
+            "Action": [
+                "iam:DeletePolicy",
+                "iam:CreatePolicyVersion",
+                "iam:DeletePolicyVersion",
+                "iam:SetDefaultPolicyVersion"
+            ],
+            "Resource": [
+                "arn:aws:iam::*:policy/iam-identity-center-deny-*-policy",
+                "arn:aws:iam::*:policy/iam-identity-center-allow-*-policy"
+            ]
+        },
+        {
+            "Sid": "DenySupportBilling",
+            "Action": [
+                "support:*",
+                "billing:*",
+                "organizations:*",
+                "account:*",
+                "aws-portal:*",
+                "budgets:*",
+                "ce:*",
+                "cur:*",
+                "purchase-orders:*",
+                "controltower:*"
+            ],
+            "Resource": "*",
+            "Effect": "Deny"
+        },
+        {
+            "Sid": "DenyPublicS3Acl",
+            "Effect": "Deny",
+            "Action": [
+                "s3:PutBucketAcl",
+                "s3:PutObjectAcl"
+            ],
+            "Resource": "arn:aws:s3:::*",
+            "Condition": {
+                "StringLikeIfExists": {
+                    "s3:x-amz-acl": [
+                        "public-read",
+                        "public-read-write",
+                        "authenticated-read"
+                    ]
+                }
+            }
+        },
+        {
+            "Sid": "DenyPublicS3Block",
+            "Effect": "Deny",
+            "Action": "s3:PutBucketPublicAccessBlock",
+            "Resource": "arn:aws:s3:::*"
+        },
+        {
+            "Sid": "DenyIAMIdentityCenterAccess",
+            "Effect": "Deny",
+            "Action": [
+                "sso:*",
+                "sso-directory:*",
+                "identitystore:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "DenyIAMAccess",
+            "Effect": "Deny",
+            "Action": [
+                "iam:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "DenySecurityConfigChanges",
+            "Effect": "Deny",
+            "Action": [
+                "cloudtrail:*",
+                "config:*",
+                "guardduty:*",
+                "securityhub:*",
+                "kms:ScheduleKeyDeletion"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "DenyVPCChanges",
+            "Effect": "Deny",
+            "Action": [
+                "ec2:CreateVpc",
+                "ec2:DeleteVpc",
+                "ec2:CreateInternetGateway",
+                "ec2:DeleteInternetGateway",
+                "ec2:ModifyVpcAttribute",
+                "ec2:CreateNatGateway",
+                "ec2:DeleteNatGateway",
+                "ec2:CreateVpcEndpoint",
+                "ec2:DeleteVpcEndpoints",
+                "ec2:CreateSubnet",
+                "ec2:DeleteSubnet",
+                "ec2:ModifySubnetAttribute",
+                "ec2:CreateRouteTable",
+                "ec2:DeleteRouteTable",
+                "ec2:AssociateRouteTable",
+                "ec2:DisassociateRouteTable",
+                "ec2:CreateRoute",
+                "ec2:DeleteRoute",
+                "ec2:CreateVpcPeeringConnection",
+                "ec2:DeleteVpcPeeringConnection",
+                "ec2:AcceptVpcPeeringConnection",
+                "ec2:RejectVpcPeeringConnection",
+                "ec2:ModifyVpcPeeringConnectionOptions",
+                "ec2:CreateTransitGateway",
+                "ec2:DeleteTransitGateway",
+                "ec2:ModifyTransitGateway",
+                "ec2:CreateTransitGatewayVpcAttachment",
+                "ec2:DeleteTransitGatewayVpcAttachment",
+                "ec2:ModifyTransitGatewayVpcAttachment",
+                "ec2:CreateTransitGatewayPolicyTable",
+                "ec2:DeleteTransitGatewayPolicyTable",
+                "ec2:CreateTransitGatewayRouteTable",
+                "ec2:DeleteTransitGatewayRouteTable",
+                "ec2:CreateTransitGatewayRoute",
+                "ec2:DeleteTransitGatewayRoute"
+            ],
+            "Resource": "*"
+        }
+
+    ]
+}

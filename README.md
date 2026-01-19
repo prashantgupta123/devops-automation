@@ -10,6 +10,7 @@ devops-automation/
 ├── aws-backup-failed-monitoring/       # AWS Backup job failure monitoring
 ├── aws-cloudwatch-alarm-failed-monitoring/ # CloudWatch alarm action failure monitoring
 ├── aws-cost-explorer-report/           # AWS cost analysis and reporting
+├── aws-cost-optimization-hub/         # AWS Cost Optimization Hub automated reporting
 ├── aws-cw-orphan-alarms/              # CloudWatch orphaned alarms cleanup
 ├── aws-ec2-backup-check/              # EC2 backup validation automation
 ├── aws-ec2-spot-interruption-notification/ # EC2 Spot Instance interruption alerts
@@ -17,7 +18,9 @@ devops-automation/
 ├── aws-ecs-service-task-recycle/      # ECS service task sequential recycling
 ├── aws-guardduty-notification/        # GuardDuty multi-channel alert system
 ├── aws-iam-identity-accounts-sso/     # AWS SSO credential automation
+├── aws-iam-identity-permission-set/   # IAM Identity Center permission set automation
 ├── aws-news/                          # AWS news aggregation service
+├── aws-secrets-manager-backup/        # Secrets Manager daily backup automation
 ├── aws-start-stop-services/           # EC2 instance automated scheduling
 ├── aws-target-group-report/           # Target group health reporting
 ├── database-user-management/          # Database user access management automation
@@ -97,6 +100,22 @@ Generates comprehensive AWS cost analysis reports with breakdowns by service, re
 - Multi-account cost aggregation
 - Security scanning integration
 
+### 💡 AWS Cost Optimization Hub
+**Location:** `aws-cost-optimization-hub/`
+
+Automated solution for retrieving and reporting AWS Cost Optimization Hub recommendations across single or multiple AWS accounts. Generates comprehensive Excel reports with detailed cost-saving recommendations and sends email notifications to stakeholders.
+
+**Key Features:**
+- Automated retrieval of cost optimization recommendations
+- Multi-account support with flexible authentication methods
+- Comprehensive Excel reports with multiple sheets (summary, detailed, resource-type-specific)
+- Email notifications with HTML formatting and attachments
+- Grouping by resource type for easier prioritization
+- Implementation guidance with effort estimates and rollback information
+- Support for AWS profiles, IAM roles, access keys, and STS tokens
+- Production-ready error handling and logging
+- Serverless-ready architecture for Lambda deployment
+
 ### 🔔 AWS CloudWatch Orphan Alarms
 **Location:** `aws-cw-orphan-alarms/`
 
@@ -143,6 +162,23 @@ Automated notification system for AWS EC2 Spot Instance interruption warnings. M
 - CloudFormation deployment with automated scripts
 - Real-time spot interruption monitoring
 - Service impact assessment and reporting
+
+### 🔐 AWS IAM Identity Center Permission Set Automation
+**Location:** `aws-iam-identity-permission-set/`
+
+Comprehensive automation solution for creating and managing AWS IAM Identity Center permission sets and deploying custom IAM policies across multiple AWS accounts. Provides declarative, configuration-driven approach to standardize access control across an entire AWS Organization.
+
+**Key Features:**
+- Automated permission set creation in IAM Identity Center
+- Multi-account IAM policy deployment
+- Layered security with deny and allow policies
+- Flexible AWS authentication methods (profile, role, keys, STS)
+- Idempotent operations safe for repeated execution
+- Support for AWS managed, customer managed, and inline policies
+- Comprehensive tagging and resource tracking
+- Session duration configuration (up to 12 hours)
+- Production-ready error handling and logging
+- Configuration-driven with JSON input files
 
 ### 🔐 AWS IAM Identity & SSO Management
 **Location:** `aws-iam-identity-accounts-sso/`

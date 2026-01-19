@@ -1,0 +1,267 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "EC2FullAccess",
+            "Effect": "Allow",
+            "Action": "ec2:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "ElasticLoadBalancingFullAccess",
+            "Effect": "Allow",
+            "Action": "elasticloadbalancing:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "S3FullAccess",
+            "Effect": "Allow",
+            "Action": [
+                "s3:*",
+                "s3-object-lambda:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "RDSFullAccess",
+            "Effect": "Allow",
+            "Action": [
+                "rds:*",
+                "pi:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "ECSFullAccess",
+            "Effect": "Allow",
+            "Action": "ecs:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "CloudWatchFullAccess",
+            "Effect": "Allow",
+            "Action": [
+                "cloudwatch:*",
+                "logs:*",
+                "application-signals:*",
+                "rum:*",
+                "synthetics:*",
+                "xray:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "EventBridgeFullAccess",
+            "Effect": "Allow",
+            "Action": [
+                "events:*",
+                "schemas:*",
+                "scheduler:*",
+                "pipes:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "LambdaFullAccess",
+            "Effect": "Allow",
+            "Action": "lambda:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "CloudFrontFullAccess",
+            "Effect": "Allow",
+            "Action": "cloudfront:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "SQSFullAccess",
+            "Effect": "Allow",
+            "Action": "sqs:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "SecretsManagerReadWrite",
+            "Effect": "Allow",
+            "Action": "secretsmanager:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "SNSFullAccess",
+            "Effect": "Allow",
+            "Action": "sns:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "ElastiCacheFullAccess",
+            "Effect": "Allow",
+            "Action": "elasticache:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "OpenSearchServiceFullAccess",
+            "Effect": "Allow",
+            "Action": [
+                "es:*",
+                "aoss:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "WAFConsoleFullAccess",
+            "Effect": "Allow",
+            "Action": [
+                "wafv2:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "ECRFullAccess",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:*",
+                "ecr-public:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "MQFullAccess",
+            "Effect": "Allow",
+            "Action": "mq:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "KMSPowerUser",
+            "Effect": "Allow",
+            "Action": [
+                "kms:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "CodeBuildAdminAccess",
+            "Effect": "Allow",
+            "Action": "codebuild:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "CodeCommitFullAccess",
+            "Effect": "Allow",
+            "Action": "codecommit:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "CodeDeployFullAccess",
+            "Effect": "Allow",
+            "Action": "codedeploy:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "CodePipelineFullAccess",
+            "Effect": "Allow",
+            "Action": "codepipeline:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "AutoScalingFullAccess",
+            "Effect": "Allow",
+            "Action": "autoscaling:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "ApplicationAutoScalingFullAccess",
+            "Effect": "Allow",
+            "Action": "application-autoscaling:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "CloudFormationFullAccess",
+            "Effect": "Allow",
+            "Action": "cloudformation:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "ServiceDiscoveryFullAccess",
+            "Effect": "Allow",
+            "Action": "servicediscovery:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "SSMFullAccess",
+            "Effect": "Allow",
+            "Action": "ssm:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "ResourceExplorerFullAccess",
+            "Effect": "Allow",
+            "Action": "resource-explorer-2:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "IAMServiceLinkedRoleCreation",
+            "Effect": "Allow",
+            "Action": "iam:CreateServiceLinkedRole",
+            "Resource": "*",
+            "Condition": {
+                "StringLike": {
+                    "iam:AWSServiceName": [
+                        "autoscaling.amazonaws.com",
+                        "ec2scheduled.amazonaws.com",
+                        "elasticloadbalancing.amazonaws.com",
+                        "spot.amazonaws.com",
+                        "spotfleet.amazonaws.com",
+                        "transitgateway.amazonaws.com",
+                        "ecs.amazonaws.com",
+                        "ecs.application-autoscaling.amazonaws.com",
+                        "rds.amazonaws.com",
+                        "rds.application-autoscaling.amazonaws.com",
+                        "application-signals.cloudwatch.amazonaws.com",
+                        "events.amazonaws.com",
+                        "resource-explorer-2.amazonaws.com",
+                        "apidestinations.events.amazonaws.com",
+                        "schemas.amazonaws.com"
+                    ]
+                }
+            }
+        },
+        {
+            "Sid": "IAMReadOnlyAccess",
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetPolicy",
+                "iam:GetPolicyVersion",
+                "iam:GetRole",
+                "iam:ListAttachedRolePolicies",
+                "iam:ListInstanceProfiles",
+                "iam:ListRoles"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "IAMPassRoleAccess",
+            "Effect": "Allow",
+            "Action": "iam:PassRole",
+            "Resource": "*",
+            "Condition": {
+                "StringLike": {
+                    "iam:PassedToService": [
+                        "ecs-tasks.amazonaws.com",
+                        "ecs.amazonaws.com",
+                        "ec2.amazonaws.com",
+                        "ec2.amazonaws.com.cn",
+                        "application-autoscaling.amazonaws.com",
+                        "application-autoscaling.amazonaws.com.cn",
+                        "events.amazonaws.com",
+                        "scheduler.amazonaws.com",
+                        "pipes.amazonaws.com",
+                        "logs.amazonaws.com",
+                        "telemetry-pipelines.observabilityadmin.amazonaws.com",
+                        "lambda.amazonaws.com",
+                        "codebuild.amazonaws.com",
+                        "codepipeline.amazonaws.com"
+                    ]
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,103 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DenyIAMPolicy",
+            "Effect": "Deny",
+            "Action": [
+                "iam:DeletePolicy",
+                "iam:CreatePolicyVersion",
+                "iam:DeletePolicyVersion",
+                "iam:SetDefaultPolicyVersion"
+            ],
+            "Resource": [
+                "arn:aws:iam::*:policy/iam-identity-center-deny-*-policy",
+                "arn:aws:iam::*:policy/iam-identity-center-allow-*-policy"
+            ]
+        },
+        {
+            "Sid": "DenySupportBilling",
+            "Action": [
+                "support:*",
+                "billing:*",
+                "organizations:*",
+                "account:*",
+                "aws-portal:*",
+                "budgets:*",
+                "ce:*",
+                "cur:*",
+                "purchase-orders:*",
+                "controltower:*"
+            ],
+            "Resource": "*",
+            "Effect": "Deny"
+        },
+        {
+            "Sid": "DenyPublicS3Acl",
+            "Effect": "Deny",
+            "Action": [
+                "s3:PutBucketAcl",
+                "s3:PutObjectAcl"
+            ],
+            "Resource": "arn:aws:s3:::*",
+            "Condition": {
+                "StringLikeIfExists": {
+                    "s3:x-amz-acl": [
+                        "public-read",
+                        "public-read-write",
+                        "authenticated-read"
+                    ]
+                }
+            }
+        },
+        {
+            "Sid": "DenyPublicS3Block",
+            "Effect": "Deny",
+            "Action": "s3:PutBucketPublicAccessBlock",
+            "Resource": "arn:aws:s3:::*"
+        },
+        {
+            "Sid": "DenyIAMIdentityCenterAccess",
+            "Effect": "Deny",
+            "Action": [
+                "sso:*",
+                "sso-directory:*",
+                "identitystore:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "DenyConsoleLoginProfile",
+            "Effect": "Deny",
+            "Action": [
+                "iam:CreateLoginProfile",
+                "iam:UpdateLoginProfile"
+            ],
+            "Resource": "arn:aws:iam::*:user/*"
+        },
+        {
+            "Sid": "DenyIAMIdentityProvider",
+            "Effect": "Deny",
+            "Action": [
+                "iam:DeleteSAMLProvider",
+                "iam:UpdateSAMLProvider",
+                "iam:CreateSAMLProvider",
+                "iam:DeleteAccountPasswordPolicy",
+                "iam:UpdateAccountPasswordPolicy"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "DenySecurityConfigChanges",
+            "Effect": "Deny",
+            "Action": [
+                "cloudtrail:StopLogging",
+                "cloudtrail:DeleteTrail",
+                "config:DeleteConfigurationRecorder",
+                "guardduty:DeleteDetector",
+                "securityhub:DisableSecurityHub"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

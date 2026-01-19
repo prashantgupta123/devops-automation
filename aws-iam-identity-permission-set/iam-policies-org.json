@@ -1,0 +1,38 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "IAMIdentityCenterPermissionSetManagement",
+      "Effect": "Allow",
+      "Action": [
+        "sso:CreatePermissionSet",
+        "sso:DescribePermissionSet",
+        "sso:ListPermissionSets",
+        "sso:UpdatePermissionSet",
+        "sso:DeletePermissionSet",
+        "sso:AttachManagedPolicyToPermissionSet",
+        "sso:DetachManagedPolicyFromPermissionSet",
+        "sso:AttachCustomerManagedPolicyReferenceToPermissionSet",
+        "sso:DetachCustomerManagedPolicyReferenceFromPermissionSet",
+        "sso:PutInlinePolicyToPermissionSet",
+        "sso:DeleteInlinePolicyFromPermissionSet",
+        "sso:GetInlinePolicyForPermissionSet",
+        "sso:ListManagedPoliciesInPermissionSet",
+        "sso:ListCustomerManagedPolicyReferencesInPermissionSet",
+        "sso:TagResource",
+        "sso:UntagResource",
+        "sso:ListTagsForResource"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IAMIdentityCenterInstanceAccess",
+      "Effect": "Allow",
+      "Action": [
+        "sso:ListInstances",
+        "sso:DescribeInstance"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

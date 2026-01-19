@@ -1,0 +1,162 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "RestrictCodeCommitAccessByIP",
+            "Effect": "Deny",
+            "Action": [
+                "codecommit:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowCodeCommitReadOnlyActions",
+            "Effect": "Allow",
+            "Action": [
+                "codecommit:BatchGet*",
+                "codecommit:BatchDescribe*",
+                "codecommit:Describe*",
+                "codecommit:EvaluatePullRequestApprovalRules",
+                "codecommit:Get*",
+                "codecommit:List*",
+                "codecommit:GitPull"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "CloudWatchEventsCodeCommitRulesReadOnlyAccess",
+            "Effect": "Allow",
+            "Action": [
+                "events:DescribeRule",
+                "events:ListTargetsByRule",
+                "events:ListRuleNamesByTarget"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "SNSSubscriptionAccess",
+            "Effect": "Allow",
+            "Action": [
+                "sns:ListTopics",
+                "sns:ListSubscriptionsByTopic",
+                "sns:GetTopicAttributes"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "LambdaReadOnlyListAccess",
+            "Effect": "Allow",
+            "Action": [
+                "lambda:ListFunctions"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowCodeCommitWriteActions",
+            "Effect": "Allow",
+            "Action": [
+                "codecommit:CreateBranch",
+                "codecommit:PostCommentForPullRequest",
+                "codecommit:UpdatePullRequestDescription",
+                "codecommit:CreateCommit",
+                "codecommit:UpdatePullRequestTitle",
+                "codecommit:PostCommentReply",
+                "codecommit:UpdateComment",
+                "codecommit:MergePullRequestBySquash",
+                "codecommit:MergePullRequestByThreeWay",
+                "codecommit:MergePullRequestByFastForward",
+                "codecommit:CreatePullRequest",
+                "codecommit:GitPush",
+                "codecommit:UpdatePullRequestStatus",
+                "codecommit:UpdatePullRequestApprovalState"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowCodePipelineActions",
+            "Effect": "Allow",
+            "Action": [
+                "codepipeline:StartPipelineExecution",
+                "codepipeline:RetryStageExecution",
+                "codepipeline:StopPipelineExecution"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowCodeBuildReadOnlyActions",
+            "Action": [
+                "codebuild:StartBuild",
+                "codebuild:StopBuild",
+                "codebuild:StartBuildBatch",
+                "codebuild:StopBuildBatch",
+                "codebuild:RetryBuild",
+                "codebuild:RetryBuildBatch",
+                "codebuild:BatchGet*",
+                "codebuild:GetResourcePolicy",
+                "codebuild:DescribeTestCases",
+                "codebuild:DescribeCodeCoverages",
+                "codebuild:List*"
+            ],
+            "Effect": "Allow",
+            "Resource": "*"
+        },
+        {
+            "Sid": "SSMParameterWriteAccess",
+            "Effect": "Allow",
+            "Action": [
+                "ssm:PutParameter"
+            ],
+            "Resource": "arn:aws:ssm:*:*:parameter/CodeBuild/*"
+        },
+        {
+            "Sid": "SSMStartSessionAccess",
+            "Effect": "Allow",
+            "Action": [
+                "ssm:StartSession"
+            ],
+            "Resource": "arn:aws:ecs:*:*:task/*/*"
+        },
+        {
+            "Sid": "AllowECRReadOnlyActions",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:DescribeRepositories",
+                "ecr:ListImages"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowS3ReadOnlyActions",
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetBucketLocation",
+                "s3:ListAllMyBuckets",
+                "s3:ListBucket",
+                "s3:GetObject"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowCloudWatchLogsReadOnlyActions",
+            "Effect": "Allow",
+            "Action": [
+                "logs:DescribeLogGroups",
+                "logs:DescribeLogStreams",
+                "logs:GetLogEvents",
+                "logs:FilterLogEvents"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowCloudWatchReadOnlyActions",
+            "Effect": "Allow",
+            "Action": [
+                "cloudwatch:DescribeAlarms",
+                "cloudwatch:GetMetricData",
+                "cloudwatch:ListMetrics",
+                "cloudwatch:GetMetricStatistics"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
