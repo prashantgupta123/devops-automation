@@ -217,8 +217,8 @@ chmod +x script.sh
 Or run Python directly:
 
 ```bash
-python3 -m venv python-venv
-source python-venv/bin/activate
+python3 -m venv venv
+source venv/bin/activate
 pip install boto3
 python function.py
 ```

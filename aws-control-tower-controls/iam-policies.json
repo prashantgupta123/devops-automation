@@ -1,0 +1,22 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "controltower:ListEnabledControls",
+                "controltower:EnableControl",
+                "controltower:GetControlOperation",
+                "controlcatalog:ListControls",
+                "controlcatalog:GetControl",
+                "controlcatalog:ListControlMappings",
+                "controlcatalog:ListDomains",
+                "controlcatalog:ListObjectives",
+                "controlcatalog:ListCommonControls",
+                "organizations:ListOrganizationalUnitsForParent",
+                "organizations:ListRoots"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
