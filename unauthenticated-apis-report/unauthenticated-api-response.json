@@ -1,0 +1,54 @@
+[
+    {
+        "url": "https://www.example.com/api/v1/auth/login",
+        "unauthenticated": true,
+        "data": [
+            {
+                "request_url": "https://www.example.com/api/v1/auth/login",
+                "request_method": "GET",
+                "request_headers": {},
+                "request_payload": {},
+                "request_params": {},
+                "response_status_code": 200,
+                "response_data": "",
+                "annotation": "Without Authentication Headers"
+            },
+            {
+                "request_url": "https://www.example.com/api/v1/auth/login",
+                "request_method": "GET",
+                "request_headers": {
+                    "Authorization": "0ZgeqPPWkNf0Mz5onnq79m5vmX6pQWRXHVx7bXi62xxv7X1UJh25MTAlDoQS"
+                },
+                "request_payload": {},
+                "request_params": {},
+                "response_status_code": 200,
+                "response_data": "",
+                "annotation": "With Authentication Headers"
+            },
+            {
+                "request_url": "https://www.example.com/api/v1/auth/login",
+                "request_method": "GET",
+                "request_headers": {
+                    "Authorization": "Bearer 0ZgeqPPWkNf0Mz5onnq79m5vmX6pQWRXHVx7bXi62xxv7X1UJh25MTAlDoQS"
+                },
+                "request_payload": {},
+                "request_params": {},
+                "response_status_code": 200,
+                "response_data": "",
+                "annotation": "With Bearer Authentication Headers"
+            },
+            {
+                "request_url": "https://www.example.com/api/v1/auth/login",
+                "request_method": "GET",
+                "request_headers": {
+                    "Authorization": "Basic 0ZgeqPPWkNf0Mz5onnq79m5vmX6pQWRXHVx7bXi62xxv7X1UJh25MTAlDoQS"
+                },
+                "request_payload": {},
+                "request_params": {},
+                "response_status_code": 200,
+                "response_data": "",
+                "annotation": "With Basic Authentication Headers"
+            }
+        ]
+    }
+]
