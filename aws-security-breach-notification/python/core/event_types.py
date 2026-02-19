@@ -32,6 +32,7 @@ class EventDetail(TypedDict, total=False):
     user_name: str
     key_generated_for: str
     key_deleted_for: str
+    access_key_id: str
     
     # VPC / network fields
     allocation_id: str

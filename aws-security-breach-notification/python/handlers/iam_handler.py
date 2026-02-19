@@ -10,25 +10,26 @@ logger = setup_logger(__name__)
 def handle_access_key_creation(event: Dict[str, Any], context: Any) -> List[EventDetail]:
     """Alert when a new IAM access key is created."""
     logger.info("Processing access key creation")
-    user_name = (event['detail']
-                 .get('responseElements', {})
-                 .get('accessKey', {})
-                 .get('userName', 'Unknown'))
+    access_key = event['detail'].get('responseElements', {}).get('accessKey', {})
+    user_name = access_key.get('userName', 'Unknown')
+    access_key_id = access_key.get('accessKeyId', 'Unknown')
     return [EventDetail(
-        title=f"Access key created for user {user_name}",
-        key_generated_for=user_name
+        title=f"Access key {access_key_id} created for user {user_name}",
+        key_generated_for=user_name,
+        access_key_id=access_key_id
     )]
 
 
 def handle_access_key_deletion(event: Dict[str, Any], context: Any) -> List[EventDetail]:
     """Alert when an IAM access key is deleted."""
     logger.info("Processing access key deletion")
-    user_name = (event['detail']
-                 .get('requestParameters', {})
-                 .get('userName', 'Unknown'))
+    request_params = event['detail'].get('requestParameters', {})
+    user_name = request_params.get('userName', 'Unknown')
+    access_key_id = request_params.get('accessKeyId', 'Unknown')
     return [EventDetail(
-        title=f"Access key deleted for user {user_name}",
-        key_deleted_for=user_name
+        title=f"Access key {access_key_id} deleted for user {user_name}",
+        key_deleted_for=user_name,
+        access_key_id=access_key_id
     )]
 
 
