@@ -1,0 +1,587 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description:  "Security Single Lambda function for child accounts calling lambda layers from main account"
+
+########### Parameters block #############
+Parameters:
+  AccountName:
+    Type: String
+    Description: Account Name as an identifier for the account
+    Default: "CloudPlatform-NONPROD"
+  EmailIds:
+    Type: String
+    AllowedPattern: ^(\s?[^\s,]+@[^\s,]+\.[^\s,]+\s?,)*(\s?[^\s,]+@[^\s,]+\.[^\s,]+)$
+    ConstraintDescription: must be a valid email address
+    Description: Add multiple Email address of the concerned persons
+    Default: "prashant.gupta@cloudplatform.com"
+  Name:
+    Type: String
+    Description: Add a name which will be use as perefix name for lambda,event.role.
+    Default: "AWS-Generic-Security"
+  LayerName:
+    Type: String
+    Description: Add a lambda layer name
+    Default: "AWS-Generic-Security"
+  LambdaLayerVersion:
+    Type: String
+    Description: Add a lambda layer version
+    Default: "1"
+
+########### Resources block #############
+Resources:
+  # EC2 and Network Events
+  CloudWatchEventEC2:
+    Type: AWS::Events::Rule
+    DependsOn: LambdaFunction
+    Properties:
+      EventPattern:
+        source:
+          - aws.ec2
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventName:
+            - RunInstances
+            - ModifySnapshotAttribute
+            - ModifyImageAttribute
+            - CreateSecurityGroup
+            - AuthorizeSecurityGroupIngress
+            - AuthorizeSecurityGroupEgress
+            - CreateVpc
+            - DeleteVpc
+            - CreateSubnet
+            - DeleteSubnet
+            - CreateNatGateway
+            - DeleteNatGateway
+            - CreateRouteTable
+            - DeleteRouteTable
+            - CreateVpcPeeringConnection
+            - DeleteVpcPeeringConnection
+            - CreateNetworkAcl
+            - DeleteNetworkAcl
+            - AllocateAddress
+            - DeleteVpcEndpoints
+            - ReleaseAddress
+            - CreateVolume
+            - ModifyVolumeAttribute
+            - DeleteVolume
+            - CreateNetworkInterface
+            - AssociateAddress
+            - ModifyNetworkInterfaceAttribute
+      Name: !Sub '${Name}-ec2-events-${AWS::Region}'
+      Targets:
+        - Arn: !GetAtt 'LambdaFunction.Arn'
+          Id: LambdaFunctionEC2
+
+  # IAM Events
+  CloudWatchEventIAM:
+    Type: AWS::Events::Rule
+    DependsOn: LambdaFunction
+    Properties:
+      EventPattern:
+        source:
+          - aws.iam
+          - aws.signin
+        detail-type:
+          - AWS API Call via CloudTrail
+          - AWS Console Sign In via CloudTrail
+        detail:
+          eventName:
+            - CreateAccessKey
+            - DeleteAccessKey
+            - ConsoleLogin
+            - CreateUser
+            - DeleteUser
+            - PutUserPolicy
+            - PutRolePolicy
+            - AttachUserPolicy
+            - AttachRolePolicy
+            - CreatePolicy
+            - UpdateAssumeRolePolicy
+            - CreateRole
+            - DeleteRole
+            - DetachRolePolicy
+            - DeleteRolePolicy
+      Name: !Sub '${Name}-iam-events-${AWS::Region}'
+      Targets:
+        - Arn: !GetAtt 'LambdaFunction.Arn'
+          Id: LambdaFunctionIAM
+
+  # RDS and Database Events
+  CloudWatchEventRDS:
+    Type: AWS::Events::Rule
+    DependsOn: LambdaFunction
+    Properties:
+      EventPattern:
+        source:
+          - aws.rds
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventName:
+            - ModifyDBClusterSnapshotAttribute
+            - ModifyDBSnapshotAttribute
+            - CreateDBInstance
+      Name: !Sub '${Name}-rds-events-${AWS::Region}'
+      Targets:
+        - Arn: !GetAtt 'LambdaFunction.Arn'
+          Id: LambdaFunctionRDS
+
+  # S3 Events
+  CloudWatchEventS3:
+    Type: AWS::Events::Rule
+    DependsOn: LambdaFunction
+    Properties:
+      EventPattern:
+        source:
+          - aws.s3
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventName:
+            - PutBucketPublicAccessBlock
+            - PutBucketAcl
+      Name: !Sub '${Name}-s3-events-${AWS::Region}'
+      Targets:
+        - Arn: !GetAtt 'LambdaFunction.Arn'
+          Id: LambdaFunctionS3
+
+  # CloudTrail Events
+  CloudWatchEventCloudTrail:
+    Type: AWS::Events::Rule
+    DependsOn: LambdaFunction
+    Properties:
+      EventPattern:
+        source:
+          - aws.cloudtrail
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventName:
+            - StopLogging
+            - DeleteTrail
+      Name: !Sub '${Name}-cloudtrail-events-${AWS::Region}'
+      Targets:
+        - Arn: !GetAtt 'LambdaFunction.Arn'
+          Id: LambdaFunctionCloudTrail
+
+  # Lambda, ALB, Route53 Events
+  CloudWatchEventCompute:
+    Type: AWS::Events::Rule
+    DependsOn: LambdaFunction
+    Properties:
+      EventPattern:
+        source:
+          - aws.lambda
+          - aws.elasticloadbalancing
+          - aws.route53
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventName:
+            - CreateFunction20150331
+            - UpdateFunctionConfiguration20150331v2
+            - UpdateFunctionCode20150331v2
+            - CreateLoadBalancer
+            - DeleteHostedZone
+            - ChangeResourceRecordSets
+      Name: !Sub '${Name}-compute-events-${AWS::Region}'
+      Targets:
+        - Arn: !GetAtt 'LambdaFunction.Arn'
+          Id: LambdaFunctionCompute
+
+  # Secrets, Backup, ECR Events
+  CloudWatchEventOther:
+    Type: AWS::Events::Rule
+    DependsOn: LambdaFunction
+    Properties:
+      EventPattern:
+        source:
+          - aws.secretsmanager
+          - aws.backup
+          - aws.ecr-public
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventName:
+            - DeleteSecret
+            - DeleteBackupPlan
+            - DeleteBackupVault
+            - CreateRepository
+      Name: !Sub '${Name}-other-events-${AWS::Region}'
+      Targets:
+        - Arn: !GetAtt 'LambdaFunction.Arn'
+          Id: LambdaFunctionOther
+
+  # Config Events
+  CloudWatchEventConfig:
+    Type: AWS::Events::Rule
+    DependsOn: LambdaFunction
+    Properties:
+      EventPattern:
+        source:
+          - aws.config
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventName:
+            - DeleteConfigurationRecorder
+            - StopConfigurationRecorder
+            - DeleteDeliveryChannel
+            - DeleteConfigRule
+            - DeleteAggregationAuthorization
+            - DeleteConfigurationAggregator
+            - DeleteRemediationConfiguration
+            - PutConfigRule
+      Name: !Sub '${Name}-config-events-${AWS::Region}'
+      Targets:
+        - Arn: !GetAtt 'LambdaFunction.Arn'
+          Id: LambdaFunctionConfig
+
+  # CloudWatch Logs Events
+  CloudWatchEventLogs:
+    Type: AWS::Events::Rule
+    DependsOn: LambdaFunction
+    Properties:
+      EventPattern:
+        source:
+          - aws.logs
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventName:
+            - DeleteLogGroup
+            - DeleteLogStream
+            - DeleteAlarms
+            - DisableAlarmActions
+            - DeleteMetricFilter
+            - DeleteSubscriptionFilter
+            - PutRetentionPolicy
+      Name: !Sub '${Name}-logs-events-${AWS::Region}'
+      Targets:
+        - Arn: !GetAtt 'LambdaFunction.Arn'
+          Id: LambdaFunctionLogs
+
+  # KMS Events
+  CloudWatchEventKMS:
+    Type: AWS::Events::Rule
+    DependsOn: LambdaFunction
+    Properties:
+      EventPattern:
+        source:
+          - aws.kms
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventName:
+            - ScheduleKeyDeletion
+            - DisableKey
+            - PutKeyPolicy
+            - DeleteAlias
+            - CancelKeyDeletion
+      Name: !Sub '${Name}-kms-events-${AWS::Region}'
+      Targets:
+        - Arn: !GetAtt 'LambdaFunction.Arn'
+          Id: LambdaFunctionKMS
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Name}-${AWS::Region}'
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: !Sub '${Name}-policy-${AWS::Region}'
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Action:
+                  - "secretsmanager:GetSecretValue"
+                Effect: Allow
+                Resource: !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*'
+                Sid: SecretPermission
+              - Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Effect: Allow
+                Resource: "arn:aws:logs:*:*:*"
+                Sid: CloudWatchLogsPermissions
+              - Action:
+                  - "ec2:DescribeSecurityGroups"
+                  - "ec2:DescribeSecurityGroupReferences"
+                  - "ec2:DescribeStaleSecurityGroups"
+                  - "ec2:DescribeRegions"
+                  - "ec2:DescribeInstances"
+                  - "elasticloadbalancing:DescribeLoadBalancers"
+                  - "rds:DescribeDBInstances"
+                  - "ec2:DescribeNetworkInterfaces"
+                  - "ec2:DescribeRouteTables"
+                Resource: "*"
+                Effect: Allow
+                Sid: EC2Permissions
+              - Action:
+                  - "iam:ListAccessKeys"
+                  - "iam:GetServiceLastAccessedDetails"
+                  - "iam:GetAccessKeyLastUsed"
+                  - "iam:ListUsers"
+                  - "iam:ListMFADevices"
+                  - "iam:GetAccountSummary"
+                  - "iam:GetAccountAuthorizationDetails"
+                Resource: "*"
+                Effect: Allow
+                Sid: IAMPermissions
+              - Action:
+                  - "cloudtrail:ListTrails"
+                  - "cloudtrail:DescribeTrails"
+                  - "cloudtrail:GetTrail"
+                  - "cloudtrail:GetTrailStatus"
+                Resource: "*"
+                Effect: Allow
+                Sid: CloudtrailPermissions
+              - Action:
+                  - "s3:ListAllMyBuckets"
+                  - "s3:GetBucketAcl"
+                  - "s3:GetBucketPublicAccessBlock"
+                  - "s3:GetBucketPolicy"
+                Resource: "*"
+                Effect: Allow
+                Sid: S3Permissions
+              - Action:
+                  - "lambda:InvokeFunction"
+                  - "lambda:InvokeAsync"
+                Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Name}-function'
+                Effect: Allow
+                Sid: LambdaPermissions
+              - Action:
+                  - "config:DescribeConfigurationRecorders"
+                  - "config:DescribeDeliveryChannels"
+                  - "config:DescribeConfigRules"
+                Resource: "*"
+                Effect: Allow
+                Sid: ConfigPermissions
+              - Action:
+                  - "logs:DescribeLogGroups"
+                  - "logs:DescribeLogStreams"
+                  - "logs:DescribeMetricFilters"
+                Resource: "*"
+                Effect: Allow
+                Sid: LogsPermissions
+              - Action:
+                  - "kms:DescribeKey"
+                  - "kms:GetKeyPolicy"
+                  - "kms:ListAliases"
+                Resource: "*"
+                Effect: Allow
+                Sid: KMSPermissions
+              - Action:
+                  - "ses:SendEmail"
+                  - "ses:SendRawEmail"
+                Effect: Allow
+                Resource: "*"
+                Sid: SESPermissions
+      Tags:
+        - Key : 'Name'
+          Value: !Sub '${Name}-role-${AWS::Region}'
+        - Key : 'Project'
+          Value: 'CloudPlatform'
+        - Key : 'Environment'
+          Value: 'prod'
+        - Key : 'CreatedBy'
+          Value: 'prashant.gupta@cloudplatform.com'
+        - Key : 'Owner'
+          Value: 'prashant.gupta@cloudplatform.com'
+
+
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: LambdaRole
+    Properties:
+      FunctionName: !Sub '${Name}-${AWS::Region}'
+      Role: !GetAtt LambdaRole.Arn
+      Description: Security Lambda function to capture all security events via Layer
+      Environment:
+        Variables:
+          LAYERVERSION: !Ref 'LambdaLayerVersion'
+          ACCOUNTNAME: !Ref 'AccountName'
+          EMAILIDS: !Ref 'EmailIds'
+          SECRETNAME: !Sub '${Name}-${AWS::Region}'
+          SECRETREGION: !Ref "AWS::Region"
+      Code:
+        ZipFile: |
+          import json
+          import os
+          def lambda_handler(event, context):
+            """Inline handler that imports from layer."""
+            try:
+              # Import from layer
+              from main import lambda_handler as main_handler
+              return main_handler(event, context)
+            except Exception as e:
+              print(f"Error: {e}")
+              import traceback
+              traceback.print_exc()
+              return {'statusCode': 500, 'body': f'Error: {str(e)}'}
+      Handler: index.lambda_handler
+      Timeout: 900
+      Runtime: python3.14
+      MemorySize: 1500
+      Layers:
+        - !Join
+          - ''
+          - - 'arn:aws:lambda:'
+            - !Ref AWS::Region
+            - ':'
+            - !Ref AWS::AccountId
+            - ':layer:'
+            - !Ref 'LayerName'
+            - ':'
+            - !Ref 'LambdaLayerVersion'
+      Tags:
+        - Key : 'Name'
+          Value: !Sub '${Name}-${AWS::Region}'
+        - Key : 'Project'
+          Value: 'CloudPlatform'
+        - Key : 'Environment'
+          Value: 'prod'
+        - Key : 'CreatedBy'
+          Value: 'prashant.gupta@cloudplatform.com'
+        - Key : 'Owner'
+          Value: 'prashant.gupta@cloudplatform.com'
+
+
+  CloudWatchEventLambdaPermissionEC2:
+    Type: AWS::Lambda::Permission
+    DependsOn: LambdaFunction
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt 'LambdaFunction.Arn'
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt 'CloudWatchEventEC2.Arn'
+
+  CloudWatchEventLambdaPermissionIAM:
+    Type: AWS::Lambda::Permission
+    DependsOn: LambdaFunction
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt 'LambdaFunction.Arn'
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt 'CloudWatchEventIAM.Arn'
+
+  CloudWatchEventLambdaPermissionRDS:
+    Type: AWS::Lambda::Permission
+    DependsOn: LambdaFunction
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt 'LambdaFunction.Arn'
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt 'CloudWatchEventRDS.Arn'
+
+  CloudWatchEventLambdaPermissionS3:
+    Type: AWS::Lambda::Permission
+    DependsOn: LambdaFunction
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt 'LambdaFunction.Arn'
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt 'CloudWatchEventS3.Arn'
+
+  CloudWatchEventLambdaPermissionCloudTrail:
+    Type: AWS::Lambda::Permission
+    DependsOn: LambdaFunction
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt 'LambdaFunction.Arn'
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt 'CloudWatchEventCloudTrail.Arn'
+
+  CloudWatchEventLambdaPermissionCompute:
+    Type: AWS::Lambda::Permission
+    DependsOn: LambdaFunction
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt 'LambdaFunction.Arn'
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt 'CloudWatchEventCompute.Arn'
+
+  CloudWatchEventLambdaPermissionOther:
+    Type: AWS::Lambda::Permission
+    DependsOn: LambdaFunction
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt 'LambdaFunction.Arn'
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt 'CloudWatchEventOther.Arn'
+
+  CloudWatchEventLambdaPermissionConfig:
+    Type: AWS::Lambda::Permission
+    DependsOn: LambdaFunction
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt 'LambdaFunction.Arn'
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt 'CloudWatchEventConfig.Arn'
+
+  CloudWatchEventLambdaPermissionLogs:
+    Type: AWS::Lambda::Permission
+    DependsOn: LambdaFunction
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt 'LambdaFunction.Arn'
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt 'CloudWatchEventLogs.Arn'
+
+  CloudWatchEventLambdaPermissionKMS:
+    Type: AWS::Lambda::Permission
+    DependsOn: LambdaFunction
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt 'LambdaFunction.Arn'
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt 'CloudWatchEventKMS.Arn'
+
+  SecretsManger:
+    Type: 'AWS::SecretsManager::Secret'
+    Properties:
+      Name: !Sub '${Name}-${AWS::Region}'
+      SecretString: !Sub |
+        {
+          "EMAIL_FROM": "prashant.gupta@cloudplatform.com",
+          "SES_REGION": "us-east-1",
+          "ACCESS_KEY": "NA",
+          "ACCESS_SECRET_KEY": "NA"
+        }
+      Tags:
+        - Key : 'Name'
+          Value: !Sub '${Name}-secrets'
+        - Key : 'Project'
+          Value: 'CloudPlatform'
+        - Key : 'Environment'
+          Value: 'prod'
+        - Key : 'CreatedBy'
+          Value: 'prashant.gupta@cloudplatform.com'
+        - Key : 'Owner'
+          Value: 'prashant.gupta@cloudplatform.com'
+
+  LambdaLogGroup:
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${Name}-${AWS::Region}'
+      RetentionInDays: 7
+      Tags:
+        - Key : 'Name'
+          Value: !Sub '/aws/lambda/${Name}-${AWS::Region}'
+        - Key : 'Project'
+          Value: 'CloudPlatform'
+        - Key : 'Environment'
+          Value: 'prod'
+        - Key : 'CreatedBy'
+          Value: 'prashant.gupta@cloudplatform.com'
+        - Key : 'Owner'
+          Value: 'prashant.gupta@cloudplatform.com'

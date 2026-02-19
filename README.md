@@ -21,6 +21,7 @@ devops-automation/
 ├── aws-iam-identity-permission-set/   # IAM Identity Center permission set automation
 ├── aws-news/                          # AWS news aggregation service
 ├── aws-secrets-manager-backup/        # Secrets Manager daily backup automation
+├── aws-security-breach-notification/  # Real-time security breach detection and alerting
 ├── aws-start-stop-services/           # EC2 instance automated scheduling
 ├── aws-target-group-report/           # Target group health reporting
 ├── database-user-management/          # Database user access management automation
@@ -88,6 +89,24 @@ Automated daily backup solution for AWS Secrets Manager that stores all secrets 
 - Comprehensive logging and error handling
 - S3 lifecycle policies for automatic cleanup
 - Production-ready security with encryption and access controls
+
+### 🔒 AWS Security Breach Notification
+**Location:** `aws-security-breach-notification/`
+
+Real-time security monitoring solution that detects and alerts on suspicious AWS activities via CloudTrail events. Monitors 40+ security-sensitive events including public resource exposure, unauthorized access attempts, and infrastructure changes.
+
+**Key Features:**
+- Real-time CloudTrail event monitoring via EventBridge
+- Detection of public EC2/RDS instances, security groups, snapshots, and AMIs
+- IAM security monitoring (access keys, console login, MFA enforcement)
+- S3 bucket public access detection
+- Infrastructure change tracking (VPC, subnet, NAT gateway, route tables)
+- CloudTrail tampering detection
+- Custom logic for public subnet detection via route table analysis
+- HTML-formatted email notifications with detailed event context
+- Lambda Layer architecture for multi-account deployment
+- Production-ready with type hints, structured logging, and error handling
+- Modular and extensible handler system
 
 ### 💰 AWS Cost Explorer Report
 **Location:** `aws-cost-explorer-report/`

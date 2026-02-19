@@ -82,7 +82,6 @@ aws-exports.js
 .env.*.local
 *.secret
 *credentials*
-*config*
 !example_*
 !*example*
 !*.example
