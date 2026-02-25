@@ -69,7 +69,7 @@ Resources:
       Runtime: python3.13
       Handler: lambda_function.lambda_handler
       Role: !GetAtt GuardDutyLambdaRole.Arn
-      Timeout: 30
+      Timeout: 60
       MemorySize: 128
       Code:
         ZipFile: |
@@ -86,7 +86,6 @@ Resources:
           ENABLE_SNS: !Ref EnableSNS
           ENABLE_EMAIL: !Ref EnableEmail
           ENABLE_CHAT: !Ref EnableChat
-      Timeout: 60
       Tags:
         - Key: 'Name'
           Value: !Sub '${AWS::StackName}-guardduty-processor'

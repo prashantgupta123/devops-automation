@@ -36,16 +36,23 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         Dict containing response status and details
     """
     logger.info("Processing GuardDuty finding notification")
+    logger.info(f"Received event: {json.dumps(event)}")
     
     try:
         # Load configuration
+        logger.info("Loading configuration from input.json")
         config = _load_configuration()
+        logger.info("Configuration loaded successfully")
         
         # Extract finding details
+        logger.info("Extracting finding data from event")
         finding_data = _extract_finding_data(event)
+        logger.info(f"Finding data extracted: {json.dumps(finding_data)}")
         
         # Send notifications based on configuration
+        logger.info("Starting notification delivery")
         notification_results = _send_notifications(config, finding_data)
+        logger.info(f"Notification results: {json.dumps(notification_results)}")
         
         logger.info("GuardDuty notification processing completed successfully")
         
@@ -73,7 +80,9 @@ def _load_configuration() -> Dict[str, Any]:
     """Load configuration from input.json file."""
     try:
         with open('input.json', 'r') as f:
-            return json.load(f)
+            config = json.load(f)
+            logger.info("Configuration file read successfully")
+            return config
     except Exception as e:
         logger.error(f"Failed to load configuration: {str(e)}")
         raise
@@ -82,6 +91,7 @@ def _load_configuration() -> Dict[str, Any]:
 def _extract_finding_data(event: Dict[str, Any]) -> Dict[str, Any]:
     """Extract relevant data from GuardDuty finding event."""
     detail = event['detail']
+    logger.info(f"Extracting data from finding ID: {detail.get('id', 'unknown')}")
     
     return {
         'severity': detail['severity'],
@@ -103,27 +113,33 @@ def _send_notifications(config: Dict[str, Any], finding_data: Dict[str, Any]) ->
     
     # SNS Notification
     if _is_enabled('ENABLE_SNS') and os.environ.get('SNS_TOPIC_ARN'):
+        logger.info("SNS notification enabled, attempting to send")
         try:
             _send_sns_notification(config, finding_data)
             results['sns'] = 'Success'
+            logger.info("SNS notification completed successfully")
         except Exception as e:
             logger.error(f"SNS notification failed: {str(e)}")
             results['sns'] = f'Failed: {str(e)}'
     
     # Email Notification
     if _is_enabled('ENABLE_EMAIL'):
+        logger.info("Email notification enabled, attempting to send")
         try:
             _send_email_notification(config, finding_data)
             results['email'] = 'Success'
+            logger.info("Email notification completed successfully")
         except Exception as e:
             logger.error(f"Email notification failed: {str(e)}")
             results['email'] = f'Failed: {str(e)}'
     
     # Google Chat Notification
     if _is_enabled('ENABLE_CHAT') and os.environ.get('GOOGLE_CHAT_WEBHOOK'):
+        logger.info("Google Chat notification enabled, attempting to send")
         try:
             _send_chat_notification(finding_data)
             results['chat'] = 'Success'
+            logger.info("Google Chat notification completed successfully")
         except Exception as e:
             logger.error(f"Chat notification failed: {str(e)}")
             results['chat'] = f'Failed: {str(e)}'
@@ -133,12 +149,17 @@ def _send_notifications(config: Dict[str, Any], finding_data: Dict[str, Any]) ->
 
 def _send_sns_notification(config: Dict[str, Any], finding_data: Dict[str, Any]) -> None:
     """Send SNS notification."""
+    logger.info("Creating AWS session for SNS")
     session = get_aws_session(config['awsCredentials'])
     sns_client = session.client('sns')
     
+    logger.info("Formatting SNS message")
     message = _format_sns_message(finding_data)
     subject = f"🚨 GuardDuty Alert | {finding_data['title']}"
+    subject = subject[:100]  # SNS subject limit is 100 characters
+    logger.info(f"SNS subject: {subject}")
     
+    logger.info(f"Publishing to SNS topic: {os.environ['SNS_TOPIC_ARN']}")
     sns_client.publish(
         TopicArn=os.environ['SNS_TOPIC_ARN'],
         Subject=subject,
@@ -150,26 +171,34 @@ def _send_sns_notification(config: Dict[str, Any], finding_data: Dict[str, Any])
 
 def _send_email_notification(config: Dict[str, Any], finding_data: Dict[str, Any]) -> None:
     """Send email notification."""
+    logger.info("Formatting email content")
     email_content = _format_email_content(finding_data)
     
     email_details = config['emailNotification'].copy()
     email_details['email_subject'] = f"GuardDuty Alert | {finding_data['title']}"
+    logger.info(f"Email subject: {email_details['email_subject']}")
+    logger.info(f"Email recipients: {email_details.get('email_to', [])}")
     
+    logger.info("Sending email via SMTP")
     send_email(config['smtpCredentials'], email_details, email_content)
     logger.info("Email notification sent successfully")
 
 
 def _send_chat_notification(finding_data: Dict[str, Any]) -> None:
     """Send Google Chat notification."""
+    logger.info("Formatting Google Chat message")
     message = _format_chat_message(finding_data)
     
+    webhook_url = os.environ['GOOGLE_CHAT_WEBHOOK']
+    logger.info(f"Posting to Google Chat webhook: {webhook_url[:50]}...")
     response = requests.post(
-        os.environ['GOOGLE_CHAT_WEBHOOK'],
+        webhook_url,
         json=message,
         timeout=10
     )
     
     response.raise_for_status()
+    logger.info(f"Google Chat response status: {response.status_code}")
     logger.info("Google Chat notification sent successfully")
 
 
